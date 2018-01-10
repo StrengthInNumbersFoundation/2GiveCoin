@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>760</width>
+    <width>1084</width>
     <height>380</height>
    </rect>
   </property>
@@ -79,6 +79,13 @@
        <property name="icon">
         <iconset resource="../bitcoin.qrc">
          <normaloff>:/icons/editcopy</normaloff>:/icons/editcopy</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="giveButton">
+       <property name="text">
+        <string>Give</string>
        </property>
       </widget>
      </item>

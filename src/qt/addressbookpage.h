@@ -40,6 +40,7 @@ public:
     void setModel(AddressTableModel *model);
     void setOptionsModel(OptionsModel *optionsModel);
     const QString &getReturnValue() const { return returnValue; }
+    void importPrivateKey(QString privkey, QString label);
 
 public slots:
     void done(int retval);
@@ -77,6 +78,10 @@ private slots:
     void onEditAction();
     /** Export button clicked */
     void on_exportButton_clicked();
+
+    //   void on_importButton_clicked();
+    void on_giveButton_clicked();
+
 
     /** Set button states based on selected tab and selection */
     void selectionChanged();

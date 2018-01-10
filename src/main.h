@@ -1,6 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2012 The Bitcoin developers
 // Copyright (c) 2011-2017 The Peercoin developers
+// Copyright (c) 2015-2016 Strength In Numbers Foundation
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #ifndef BITCOIN_MAIN_H
@@ -61,8 +62,13 @@ static const unsigned int MEMPOOL_HEIGHT = 0x7FFFFFFF;
 /** No amount larger than this (in satoshi) is valid */
 static const int64 MAX_MONEY = 2000000000 * COIN;
 inline bool MoneyRange(int64 nValue) { return (nValue >= 0 && nValue <= MAX_MONEY); }
+#if 0 /* peercoin defaults */
 static const int64 MIN_TX_FEE = CENT;
 static const int64 MIN_RELAY_TX_FEE = CENT;
+#else
+static const int64 MIN_TX_FEE = 0;
+static const int64 MIN_RELAY_TX_FEE = 0;
+#endif
 static const int64 MAX_MINT_PROOF_OF_WORK = 9999 * COIN;
 static const int64 MIN_TXOUT_AMOUNT = MIN_TX_FEE;
 /** Coinbase transaction outputs can only be spent after this number of new blocks (network rule) */
@@ -79,10 +85,21 @@ static const int fHaveUPnP = true;
 static const int fHaveUPnP = false;
 #endif
 
-static const uint256 hashGenesisBlockOfficial("0x0000000032fe677166d54963b62a4677d8957e87c508eaa4fd7eb1c880cd27e3");
-static const uint256 hashGenesisBlockTestNet("0x00000001f757bb737f6596503e17cd17b0658ce630cc727c0cca81aec47c9f06");
+/* 2GiveCoin Genesis Block */
+static const uint256 hashGenesisBlockTestNet ("0x00000a055a8a21ab15d2c24bf5769100e7e3d3e4134fb8a6a7e879f13a91c974");
+static const uint256 hashGenesisBlockOfficial("0x00000a055a8a21ab15d2c24bf5769100e7e3d3e4134fb8a6a7e879f13a91c974");
 
 static const int64 nMaxClockDrift = 2 * 60 * 60;        // two hours
+// "timewarp" attack ?
+// http://bitcoinist.net/interview-presstab-pos-vulnerabilities/
+
+// "Security analysis of PoW/PoS hybrids with low PoW reward"
+// https://bitcointalk.org/index.php?topic=551861.0
+
+// static const int64 nMaxClockDrift = 5 * 60 + 30;        // 5 minutes / aligned with 2X target blocktime (nStakeTargetSpacing = 120)
+
+inline int64_t PastDrift(int64_t nTime) { return nTime - (2 * 60 * 60); }   // up to 2hrs from the past
+inline int64_t FutureDrift(int64_t nTime) { return nTime + (2 * 60 * 60); } // up to 2hrs in the future
 
 extern CScript COINBASE_FLAGS;
 
@@ -129,6 +146,10 @@ extern int nBlocksToIgnore;
 
 // Settings
 extern int64 nTransactionFee;
+// 2GiveCoin
+extern int64 nCharityFee;
+
+extern bool fGenerateBitcoins;
 
 // Minimum disk space required - used in CheckDiskSpace()
 static const uint64 nMinDiskSpace = 52428800;

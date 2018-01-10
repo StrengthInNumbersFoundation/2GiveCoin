@@ -8,6 +8,8 @@
 
 #include <QFont>
 
+//extern int VanityGen(int addrtype, char *prefix, char *pubKey, char *privKey);
+
 const QString AddressTableModel::Send = "S";
 const QString AddressTableModel::Receive = "R";
 
@@ -291,7 +293,7 @@ Qt::ItemFlags AddressTableModel::flags(const QModelIndex &index) const
     // Can edit address and label for sending addresses,
     // and only label for receiving addresses.
     if(rec->type == AddressTableEntry::Sending ||
-      (rec->type == AddressTableEntry::Receiving && index.column()==Label))
+      ((rec->type == AddressTableEntry::Receiving) && index.column()==Label))
     {
         retval |= Qt::ItemIsEditable;
     }
@@ -423,4 +425,10 @@ int AddressTableModel::lookupAddress(const QString &address) const
 void AddressTableModel::emitDataChanged(int idx)
 {
     emit dataChanged(index(idx, 0, QModelIndex()), index(idx, columns.length()-1, QModelIndex()));
+}
+
+void AddressTableModel::refreshAddressTable(void)
+{
+    priv->refreshAddressTable();
+    emit dataChanged(index(0, 0, QModelIndex()), index(priv->size()-1, 0, QModelIndex()));
 }

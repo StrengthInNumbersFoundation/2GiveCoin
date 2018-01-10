@@ -1,5 +1,6 @@
 // Copyright (c) 2009-2012 The Bitcoin developers
 // Copyright (c) 2013-2017 The Peercoin developers
+// Copyright (c) 2015-2016 Strength In Numbers Foundation
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -296,12 +297,30 @@ Value sendalert(const Array& params, bool fHelp)
     CKey key;
 
     alert.strStatusBar = params[0].get_str();
-    alert.nMinVer = params[2].get_int();
-    alert.nMaxVer = params[3].get_int();
-    alert.nPriority = params[4].get_int();
-    alert.nID = params[5].get_int();
-    if (params.size() > 6)
-        alert.nCancel = params[6].get_int();
+    printf("alert.strStatusBar = %s\n", alert.strStatusBar.c_str());
+
+
+//dvd    alert.nMinVer = params[2].get_int();
+    alert.nMinVer = strtol((params[2].get_str()).c_str(), NULL, 10);
+    printf("alert.nMinVer = %d\n", alert.nMinVer);
+
+//dvd    alert.nMaxVer = params[3].get_int();
+    alert.nMaxVer = strtol((params[3].get_str()).c_str(), NULL, 10);
+    printf("alert.nMaxVer = %d\n", alert.nMaxVer);
+
+//dvd    alert.nPriority = params[4].get_int();
+    alert.nPriority = strtol((params[4].get_str()).c_str(), NULL, 10);
+    printf("alert.nPriority = %d\n", alert.nPriority);
+
+//dvd    alert.nID = params[5].get_int();
+    alert.nID = strtol((params[5].get_str()).c_str(), NULL, 10);
+    printf("alert.nID = %d\n", alert.nID);
+
+    if (params.size() > 6) {
+//dvd        alert.nCancel = params[6].get_int();
+        alert.nCancel = strtol((params[6].get_str()).c_str(), NULL, 10);
+        printf("alert.nCancel = %d\n", alert.nCancel);
+    }
     alert.nVersion = PROTOCOL_VERSION;
     alert.nRelayUntil = GetAdjustedTime() + 365*24*60*60;
     alert.nExpiration = GetAdjustedTime() + 365*24*60*60;
@@ -311,7 +330,10 @@ Value sendalert(const Array& params, bool fHelp)
     alert.vchMsg = vector<unsigned char>(sMsg.begin(), sMsg.end());
     
     vector<unsigned char> vchPrivKey = ParseHex(params[1].get_str());
-    key.SetPrivKey(CPrivKey(vchPrivKey.begin(), vchPrivKey.end())); // if key is not correct openssl may crash
+    if (! key.SetPrivKey(CPrivKey(vchPrivKey.begin(), vchPrivKey.end()))) // if key is not correct openssl may crash
+        throw runtime_error(
+                "Unable to verify alert private key");
+
     if (!key.Sign(Hash(alert.vchMsg.begin(), alert.vchMsg.end()), alert.vchSig))
         throw runtime_error(
             "Unable to sign alert, check private key?\n");  

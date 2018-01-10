@@ -86,6 +86,7 @@ public slots:
     /* Update address list from core.
      */
     void updateEntry(const QString &address, const QString &label, bool isMine, int status);
+    void refreshAddressTable(void);
 
     friend class AddressTablePriv;
 };

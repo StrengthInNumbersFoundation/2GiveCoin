@@ -4,6 +4,7 @@
  * W.J. van der Laan 2011-2012
  * The Bitcoin developers 2011-2012
  * The Peercoin developers 2011-2017
+ * Strength In Numbers Foundation 2016
  */
 
 #include <QApplication>
@@ -27,6 +28,11 @@
 #include "wallet.h"
 #include "init.h"
 
+#include "contactpage.h"
+#include "sharepage.h"
+#include "giftcardpage.h"
+
+
 #ifdef Q_OS_MAC
 #include "macdockiconhandler.h"
 #endif
@@ -40,6 +46,7 @@
 #include <QLabel>
 #include <QMessageBox>
 #include <QProgressBar>
+#include <QProgressDialog>
 #include <QStackedWidget>
 #include <QDateTime>
 #include <QMovie>
@@ -55,6 +62,8 @@
 #include <QListWidget>
 #include <QFile>
 #include <QFontDatabase>
+#include <QDesktopServices>     // dvd add for launching URL
+
 
 #include <iostream>
 
@@ -73,7 +82,7 @@ BitcoinGUI::BitcoinGUI(QWidget *parent) :
     prevBlocks(0)
 {
     restoreWindowGeometry();
-    setWindowTitle(tr("Peercoin") + " - " + tr("Wallet"));
+    setWindowTitle(tr("2GiveCoin") + " - " + tr("Wallet"));
     
     QFontDatabase::addApplicationFont(":/fonts/weblysleek");
     QFile styleFile(":/themes/default");
@@ -174,7 +183,7 @@ void BitcoinGUI::createActions()
 {
     QActionGroup *tabGroup = new QActionGroup(this);
 
-    overviewAction = new QAction(QIcon(":/icons/overview"), tr("&Overview"), this);
+    overviewAction = new QAction(QIcon(":/icons/Dashboard"), tr("&Dashboard"), this);
     overviewAction->setStatusTip(tr("Show general overview of wallet"));
     overviewAction->setToolTip(overviewAction->statusTip());
     overviewAction->setCheckable(true);
@@ -183,10 +192,23 @@ void BitcoinGUI::createActions()
 
     sendCoinsAction = new QAction(QIcon(":/icons/send"), tr("&Send"), this);
     sendCoinsAction->setStatusTip(tr("Send coins to a Peercoin address"));
+    connect(overviewAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
+    connect(overviewAction, SIGNAL(triggered()), this, SLOT(gotoOverviewPage()));
+
+    sendCoinsAction = new QAction(QIcon(":/icons/Give"), tr("&Give"), this);
+    sendCoinsAction->setToolTip(tr("Send coins to a 2GiveCoin address"));
+
+    
     sendCoinsAction->setToolTip(sendCoinsAction->statusTip());
     sendCoinsAction->setCheckable(true);
     sendCoinsAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_2));
     tabGroup->addAction(sendCoinsAction);
+
+    connect(sendCoinsAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
+    connect(sendCoinsAction, SIGNAL(triggered()), this, SLOT(gotoSendCoinsPage()));
+
+    receiveCoinsAction = new QAction(QIcon(":/icons/Receive"), tr("&Receive"), this);
+
 
     receiveCoinsAction = new QAction(QIcon(":/icons/receiving_addresses"), tr("&Receive"), this);
     receiveCoinsAction->setStatusTip(tr("Show the list of addresses for receiving payments"));
@@ -194,6 +216,20 @@ void BitcoinGUI::createActions()
     receiveCoinsAction->setCheckable(true);
     receiveCoinsAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_3));
     tabGroup->addAction(receiveCoinsAction);
+
+    connect(receiveCoinsAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
+    connect(receiveCoinsAction, SIGNAL(triggered()), this, SLOT(gotoReceiveCoinsPage()));
+
+    giftCoinsAction = new QAction(QIcon(":/icons/Gift"), tr("&Gift"), this);
+    giftCoinsAction->setToolTip(tr("Gift coins for Social Tipping"));
+    giftCoinsAction->setCheckable(true);
+    giftCoinsAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_4));
+    tabGroup->addAction(giftCoinsAction);
+    connect(giftCoinsAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
+    connect(giftCoinsAction, SIGNAL(triggered()), this, SLOT(gotoGiftCoinsPage()));
+
+    historyAction = new QAction(QIcon(":/icons/Transactions"), tr("&Transactions"), this);
+ 
 
     historyAction = new QAction(QIcon(":/icons/history"), tr("&Transactions"), this);
     historyAction->setStatusTip(tr("Browse transaction history"));
@@ -435,6 +471,7 @@ void BitcoinGUI::createTrayIconMenu()
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(sendCoinsAction);
     trayIconMenu->addAction(receiveCoinsAction);
+    trayIconMenu->addAction(giftCoinsAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(signMessageAction);
     trayIconMenu->addAction(verifyMessageAction);
@@ -598,7 +635,8 @@ void BitcoinGUI::setNumBlocks(int count, int nTotalBlocks)
     }
 
     // Set icon state: spinning if catching up, tick otherwise
-    if(secs < 90*60 && count >= nTotalBlocks)
+//dvd    if(secs < 90*60 && count >= nTotalBlocks)
+    if (count >= nTotalBlocks)
     {
         tooltip = tr("Up to date") + QString(".<br>") + tooltip;
         labelBlocksIcon->setPixmap(QIcon(":/icons/synced").pixmap(STATUSBAR_ICONSIZE, STATUSBAR_ICONSIZE));

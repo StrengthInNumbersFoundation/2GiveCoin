@@ -4,6 +4,11 @@
 #include "addresstablemodel.h"
 #include "mintingtablemodel.h"
 #include "transactiontablemodel.h"
+// 2GiveCoin
+#include "contacttablemodel.h"
+#include "sharetablemodel.h"
+#include "giftcardtablemodel.h"
+
 
 #include "ui_interface.h"
 #include "wallet.h"
@@ -127,8 +132,18 @@ void WalletModel::updateTransaction(const QString &hash, int status)
 
 void WalletModel::updateAddressBook(const QString &address, const QString &label, bool isMine, int status)
 {
-    if(addressTableModel)
-        addressTableModel->updateEntry(address, label, isMine, status);
+    if ((giftCardTableModel) && (address.contains("Gift")))
+        giftCardTableModel->updateEntry(address, label, QString(""), 0.0, status);
+    else
+        if (addressTableModel)
+            addressTableModel->updateEntry(address, label, isMine, status);
+}
+
+void WalletModel::updateContact(const QString &address, const QString &label, const QString &email, const QString &url, int status)
+{
+ if (contactTableModel)
+     contactTableModel->updateEntry(address, label, email, url, status);
+
 }
 
 bool WalletModel::validateAddress(const QString &address)
@@ -147,6 +162,8 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
     {
         return OK;
     }
+
+    printf("Pre-check input data for validity\n");
 
     // Pre-check input data for validity
     foreach(const SendCoinsRecipient &rcp, recipients)
@@ -183,7 +200,7 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
 
     if((total + nTransactionFee) > nBalance)
     {
-        return SendCoinsReturn(AmountWithFeeExceedsBalance, nTransactionFee);
+        return SendCoinsReturn(AmountWithFeeExceedsBalance, nTransactionFee, nCharityFee);
     }
 
     {
@@ -201,14 +218,18 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
         CWalletTx wtx;
         CReserveKey keyChange(wallet);
         int64 nFeeRequired = 0;
+	// 2GiveCoin
+	int64 nCharityRequired = 0;
         std::string strFailReason;
-        bool fCreated = wallet->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, strFailReason, coinControl);
+
+	printf("wallet->CreateTransaction\n");
+        bool fCreated = wallet->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, nCharityRequired, strFailReason, coinControl);
 
         if(!fCreated)
         {
             if((total + nFeeRequired) > nBalance)
             {
-                return SendCoinsReturn(AmountWithFeeExceedsBalance, nFeeRequired);
+                return SendCoinsReturn(AmountWithFeeExceedsBalance, nFeeRequired, nCharityRequired);
             }
             emit message(tr("Send Coins"), QString::fromStdString(strFailReason),
                          CClientUIInterface::MSG_ERROR);
@@ -225,6 +246,7 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
         hex = QString::fromStdString(wtx.GetHash().GetHex());
     }
 
+printf("Add addresses / update labels in address book\n");
     // Add addresses / update labels that we've sent to to the address book
     foreach(const SendCoinsRecipient &rcp, recipients)
     {
@@ -243,8 +265,8 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
             }
         }
     }
-
-    return SendCoinsReturn(OK, 0, hex);
+    printf("SendCoinsReturn(OK, 0, 0, hex)\n");
+    return SendCoinsReturn(OK, 0, 0, hex);
 }
 
 OptionsModel *WalletModel::getOptionsModel()
@@ -260,6 +282,22 @@ AddressTableModel *WalletModel::getAddressTableModel()
 MintingTableModel *WalletModel::getMintingTableModel()
 {
     return mintingTableModel;
+}
+
+ContactTableModel *WalletModel::getContactTableModel()
+{
+    return contactTableModel;
+}
+
+
+GiftCardTableModel *WalletModel::getGiftCardTableModel()
+{
+    return giftCardTableModel;
+}
+
+ShareTableModel *WalletModel::getShareTableModel()
+{
+    return shareTableModel;
 }
 
 TransactionTableModel *WalletModel::getTransactionTableModel()
@@ -344,6 +382,27 @@ static void NotifyAddressBookChanged(WalletModel *walletmodel, CWallet *wallet, 
                               Q_ARG(int, status));
 }
 
+static void NotifyContactChanged(WalletModel *walletmodel, QString &address, QString &label, QString &email, QString &url, ChangeType status)
+{
+//    OutputDebugStringF("NotifyContactChanged %s %s status=%i\n", CBitcoinAddress(address).ToString().c_str(), label.c_str(), status);
+    QMetaObject::invokeMethod(walletmodel, "updateContact", Qt::QueuedConnection,
+                              Q_ARG(QString, address),
+                              Q_ARG(QString, label),
+                              Q_ARG(QString, email),
+                              Q_ARG(QString, url),
+                              Q_ARG(int, status));
+}
+
+static void NotifyGiftCardChanged(WalletModel *walletmodel, CWallet *wallet, const CTxDestination &address, const std::string &label, bool isMine, ChangeType status)
+{
+    OutputDebugStringF("NotifyGiftCardChanged %s %s isMine=%i status=%i\n", CBitcoinAddress(address).ToString().c_str(), label.c_str(), isMine, status);
+    QMetaObject::invokeMethod(walletmodel, "updateAddressBook", Qt::QueuedConnection,
+                              Q_ARG(QString, QString::fromStdString(CBitcoinAddress(address).ToString())),
+                              Q_ARG(QString, QString::fromStdString(label)),
+                              Q_ARG(bool, isMine),
+                              Q_ARG(int, status));
+}
+
 static void NotifyTransactionChanged(WalletModel *walletmodel, CWallet *wallet, const uint256 &hash, ChangeType status)
 {
     OutputDebugStringF("NotifyTransactionChanged %s status=%i\n", hash.GetHex().c_str(), status);
@@ -357,6 +416,7 @@ void WalletModel::subscribeToCoreSignals()
     // Connect signals to wallet
     wallet->NotifyStatusChanged.connect(boost::bind(&NotifyKeyStoreStatusChanged, this, _1));
     wallet->NotifyAddressBookChanged.connect(boost::bind(NotifyAddressBookChanged, this, _1, _2, _3, _4, _5));
+    wallet->NotifyGiftCardChanged.connect(boost::bind(NotifyGiftCardChanged, this, _1, _2, _3, _4, _5));
     wallet->NotifyTransactionChanged.connect(boost::bind(NotifyTransactionChanged, this, _1, _2, _3));
 }
 
@@ -365,6 +425,8 @@ void WalletModel::unsubscribeFromCoreSignals()
     // Disconnect signals from wallet
     wallet->NotifyStatusChanged.disconnect(boost::bind(&NotifyKeyStoreStatusChanged, this, _1));
     wallet->NotifyAddressBookChanged.disconnect(boost::bind(NotifyAddressBookChanged, this, _1, _2, _3, _4, _5));
+    wallet->NotifyContactChanged.disconnect(boost::bind(NotifyContactChanged, this, _1, _2, _3, _4, _5));
+    wallet->NotifyGiftCardChanged.disconnect(boost::bind(NotifyGiftCardChanged, this, _1, _2, _3, _4, _5));
     wallet->NotifyTransactionChanged.disconnect(boost::bind(NotifyTransactionChanged, this, _1, _2, _3));
 }
 

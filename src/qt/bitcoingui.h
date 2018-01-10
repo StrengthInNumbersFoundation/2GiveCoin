@@ -16,7 +16,11 @@ class TransactionView;
 class MintingView;
 class OverviewPage;
 class AddressBookPage;
+class ContactPage;
+class SharePage;
+class GiftCardPage;
 class SendCoinsDialog;
+class GiftCoinsDialog;
 class SignVerifyMessageDialog;
 class Notificator;
 class RPCConsole;
@@ -27,6 +31,7 @@ QT_BEGIN_NAMESPACE
 class QLabel;
 class QModelIndex;
 class QProgressBar;
+class QProgressDialog;
 class QStackedWidget;
 class QUrl;
 class QListWidget;
@@ -109,6 +114,11 @@ private:
     QAction *openRPCConsoleAction;
     QAction *openChatroomAction;
     QAction *openForumAction;
+    // 2GiveCoin
+    QAction *contactAction;
+    QAction *shareAction;
+    QAction *giftCoinsAction;
+    // End 2GiveCoin
 
     QSystemTrayIcon *trayIcon;
     Notificator *notificator;

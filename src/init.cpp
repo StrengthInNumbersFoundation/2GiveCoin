@@ -1,6 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2012 The Bitcoin developers
 // Copyright (c) 2011-2017 The Peercoin developers
+// Copyright (c) 2015-2016 Strength In Numbers Foundation
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -166,8 +167,8 @@ std::string HelpMessage(HelpMessageMode hmm)
 {
     string strUsage = _("Options:") + "\n" +
         "  -?                     " + _("This help message") + "\n" +
-        "  -conf=<file>           " + _("Specify configuration file (default: peercoin.conf)") + "\n" +
-        "  -pid=<file>            " + _("Specify pid file (default: peercoind.pid)") + "\n" +
+        "  -conf=<file>           " + _("Specify configuration file (default: 2GiveCoin.conf)") + "\n" +
+        "  -pid=<file>            " + _("Specify pid file (default: 2GiveCoind.pid)") + "\n" +
         "  -gen                   " + _("Generate coins (default: 0)") + "\n" +
         "  -nominting             " + _("Disable minting of POS blocks") + "\n" +
         "  -datadir=<dir>         " + _("Specify data directory") + "\n" +
@@ -179,7 +180,7 @@ std::string HelpMessage(HelpMessageMode hmm)
         "  -socks=<n>             " + _("Select the version of socks proxy to use (4-5, default: 5)") + "\n" +
         "  -tor=<ip:port>         " + _("Use proxy to reach tor hidden services (default: same as -proxy)") + "\n"
         "  -dns                   " + _("Allow DNS lookups for -addnode, -seednode and -connect") + "\n" +
-        "  -port=<port>           " + _("Listen for connections on <port> (default: 9901 or testnet: 9903)") + "\n" +
+        "  -port=<port>           " + _("Listen for connections on <port> (default: 6763 or testnet: 16763)") + "\n" +
         "  -maxconnections=<n>    " + _("Maintain at most <n> connections to peers (default: 125)") + "\n" +
         "  -addnode=<ip>          " + _("Add a node to connect to and attempt to keep the connection open") + "\n" +
         "  -connect=<ip>          " + _("Connect only to the specified node(s)") + "\n" +
@@ -246,7 +247,7 @@ std::string HelpMessage(HelpMessageMode hmm)
         "  -walletnotify=<cmd>    " + _("Execute command when a wallet transaction changes (%s in cmd is replaced by TxID)") + "\n" +
         "  -alertnotify=<cmd>     " + _("Execute command when a relevant alert is received (%s in cmd is replaced by message)") + "\n" +
         "  -upgradewallet         " + _("Upgrade wallet to latest format") + "\n" +
-        "  -keypool=<n>           " + _("Set key pool size to <n> (default: 100)") + "\n" +
+        "  -keypool=<n>           " + _("Set key pool size to <n> (default: 1)") + "\n" +
         "  -rescan                " + _("Rescan the block chain for missing wallet transactions") + "\n" +
         "  -zapwallettxes         " + _("Clear list of wallet transactions (diagnostic tool; implies -rescan)") + "\n" +
         "  -salvagewallet         " + _("Attempt to recover private keys from a corrupt wallet.dat") + "\n" +
@@ -266,7 +267,8 @@ std::string HelpMessage(HelpMessageMode hmm)
         "  -rpcssl                                  " + _("Use OpenSSL (https) for JSON-RPC connections") + "\n" +
         "  -rpcsslcertificatechainfile=<file.cert>  " + _("Server certificate file (default: server.cert)") + "\n" +
         "  -rpcsslprivatekeyfile=<file.pem>         " + _("Server private key (default: server.pem)") + "\n" +
-        "  -rpcsslciphers=<ciphers>                 " + _("Acceptable ciphers (default: TLSv1+HIGH:!SSLv2:!aNULL:!eNULL:!AH:!3DES:@STRENGTH)") + "\n";
+        "  -rpcsslciphers=<ciphers>                 " + _("Acceptable ciphers (default: TLSv1+HIGH:!SSLv2:!aNULL:!eNULL:!AH:!3DES:@STRENGTH)") + "\n" +
+	  "  -coinfold=0            " + _("Disable the coin folding strategy in sends (default: 1)") + "\n";
 
     return strUsage;
 }
@@ -286,7 +288,7 @@ struct CImportingNow
 
 void ThreadImport(std::vector<boost::filesystem::path> vImportFiles)
 {
-    RenameThread("peercoin-loadblk");
+    RenameThread("2GiveCoin-loadblk");
 
     // -reindex
     if (fReindex) {
@@ -520,12 +522,12 @@ bool AppInit2(boost::thread_group& threadGroup)
     if (file) fclose(file);
     static boost::interprocess::file_lock lock(pathLockFile.string().c_str());
     if (!lock.try_lock())
-        return InitError(strprintf(_("Cannot obtain a lock on data directory %s. Peercoin is probably already running."), strDataDir.c_str()));
+        return InitError(strprintf(_("Cannot obtain a lock on data directory %s. 2GiveCoin is probably already running."), strDataDir.c_str()));
 
     if (GetBoolArg("-shrinkdebugfile", !fDebug))
         ShrinkDebugFile();
     printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-    printf("Peercoin version %s (%s)\n", FormatFullVersion().c_str(), CLIENT_DATE.c_str());
+    printf("2GiveCoin version %s (%s)\n", FormatFullVersion().c_str(), CLIENT_DATE.c_str());
     printf("Using OpenSSL version %s\n", SSLeay_version(SSLEAY_VERSION));
     if (!fLogTimestamps)
         printf("Startup time: %s\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()).c_str());
@@ -535,7 +537,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     std::ostringstream strErrors;
 
     if (fDaemon)
-        fprintf(stdout, "Peercoin server starting\n");
+        fprintf(stdout, "2GiveCoin server starting\n");
 
     if (nScriptCheckThreads) {
         printf("Using %u threads for script verification\n", nScriptCheckThreads);
@@ -870,10 +872,10 @@ bool AppInit2(boost::thread_group& threadGroup)
             InitWarning(msg);
         }
         else if (nLoadWalletRet == DB_TOO_NEW)
-            strErrors << _("Error loading wallet.dat: Wallet requires newer version of Peercoin") << "\n";
+            strErrors << _("Error loading wallet.dat: Wallet requires newer version of 2GiveCoin") << "\n";
         else if (nLoadWalletRet == DB_NEED_REWRITE)
         {
-            strErrors << _("Wallet needed to be rewritten: restart Peercoin to complete") << "\n";
+            strErrors << _("Wallet needed to be rewritten: restart 2GiveCoin to complete") << "\n";
             printf("%s", strErrors.str().c_str());
             return InitError(strErrors.str());
         }
@@ -911,6 +913,54 @@ bool AppInit2(boost::thread_group& threadGroup)
 
         pwalletMain->SetBestChain(CBlockLocator(pindexBest));
     }
+
+    /* Added for 2GiveCoin */
+    if (fFirstRun)
+    {
+	    uiInterface.InitMessage(_("Generating unique Give* address..."));
+	    
+	    // Create new keyUser and set as default key
+	    RandAddSeedPerfmon();
+	    
+	    CWalletDB walletdb(pwalletMain->strWalletFile);
+
+	    CAccount account;
+	    if (!walletdb.ReadAccount("", account))
+		    printf("Unable to ReadAccount(\"\")\n");
+	    
+	    printf("GetKeyFromPool(account.vchPubKey, true)\n");
+	    if (!pwalletMain->GetKeyFromPool(account.vchPubKey, true))
+		    strErrors << _("Cannot initialize keypool") << "\n";
+	    pwalletMain->SetDefaultKey(account.vchPubKey);
+	    printf("SetDefaultKey(account.vchPubKey) : %s\n", CBitcoinAddress(pwalletMain->vchDefaultKey.GetID()).ToString().c_str());
+	    
+	    if (!pwalletMain->SetAddressBookName(account.vchPubKey.GetID(), "My Give* Address"))
+		    strErrors << _("Cannot write default address") << "\n";
+	    if (!walletdb.WriteAccount("", account))
+		    printf("Unable to WriteAccount(\"\"\n");
+	    
+    } else {    // confirm we have a default set for pre RC4 wallets
+	    CWalletDB walletdb(pwalletMain->strWalletFile);
+	    
+	    CAccount account;
+	    if (!walletdb.ReadAccount("", account)) {
+		    printf("Unable to ReadAccount(\"\")\n");
+		    printf("GetKeyFromPool(account.vchPubKey, true)\n");
+		    if (!pwalletMain->GetKeyFromPool(account.vchPubKey, true))
+			    strErrors << _("Cannot initialize keypool") << "\n";
+		    pwalletMain->SetDefaultKey(account.vchPubKey);
+		    printf("SetDefaultKey(account.vchPubKey) : %s\n", CBitcoinAddress(pwalletMain->vchDefaultKey.GetID()).ToString().c_str());
+		    
+		    if (!pwalletMain->SetAddressBookName(account.vchPubKey.GetID(), "My Give* Address"))
+			    strErrors << _("Cannot write default address") << "\n";
+		    if (!walletdb.WriteAccount("", account))
+			    printf("Unable to WriteAccount(\"\"\n");
+	    } else {
+		    printf("Default account \"\" is set to %s\n", CBitcoinAddress(pwalletMain->vchDefaultKey.GetID()).ToString().c_str());
+	    }
+    }
+    /* End 2GiveCoin changes */
+
 
     printf("%s", strErrors.str().c_str());
     printf(" wallet      %15" PRI64d"ms\n", GetTimeMillis() - nStart);

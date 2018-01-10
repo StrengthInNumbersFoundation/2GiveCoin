@@ -273,7 +273,7 @@ class CBitcoinAddress : public CBase58Data
 public:
     enum
     {
-        PUBKEY_ADDRESS = 55,  // ppcoin: addresses begin with 'P'
+	PUBKEY_ADDRESS = 39,  // 2GiveCoin : address begin with 'G' 38 or 39 is G/H
         SCRIPT_ADDRESS = 117, // ppcoin: addresses begin with 'p'
         PUBKEY_ADDRESS_TEST = 111,
         SCRIPT_ADDRESS_TEST = 196,

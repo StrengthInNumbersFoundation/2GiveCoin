@@ -24,6 +24,7 @@ bool BitcoinUnits::valid(int unit)
     case BTC:
     case mBTC:
     case uBTC:
+    case TXFEE:
         return true;
     default:
         return false;
@@ -34,9 +35,9 @@ QString BitcoinUnits::name(int unit)
 {
     switch(unit)
     {
-    case BTC: return QString("PPC");
-    case mBTC: return QString("mPPC");
-    case uBTC: return QString::fromUtf8("μPPC");
+    case BTC: return QString("2GIVE");
+    case mBTC: return QString("m2GIVE");
+    case uBTC: return QString::fromUtf8("μ2GIVE");
     default: return QString("???");
     }
 }
@@ -45,9 +46,9 @@ QString BitcoinUnits::description(int unit)
 {
     switch(unit)
     {
-    case BTC: return QString("Peercoins");
-    case mBTC: return QString("Milli-Peercoins (1 / 1,000)");
-    case uBTC: return QString("Micro-Peercoins (1 / 1,000,000)");
+    case BTC: return QString("2GiveCoins");
+    case mBTC: return QString("Milli-2GiveCoins (1 / 1,000)");
+    case uBTC: return QString("Micro-2GiveCoins (1 / 1,000,000)");
     default: return QString("???");
     }
 }
@@ -70,6 +71,7 @@ int BitcoinUnits::amountDigits(int unit)
     case BTC: return 10; // 21,000,000 (# digits, without commas)
     case mBTC: return 13; // 21,000,000,000
     case uBTC: return 16; // 21,000,000,000,000
+    case TXFEE: return 6;
     default: return 0;
     }
 }
@@ -81,6 +83,7 @@ int BitcoinUnits::decimals(int unit)
     case BTC: return 6;
     case mBTC: return 3;
     case uBTC: return 0;
+    case TXFEE: return 6;
     default: return 0;
     }
 }

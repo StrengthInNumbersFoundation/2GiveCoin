@@ -69,7 +69,8 @@ QT_FORMS_UI = \
   qt/forms/sendcoinsdialog.ui \
   qt/forms/sendcoinsentry.ui \
   qt/forms/signverifymessagedialog.ui \
-  qt/forms/transactiondescdialog.ui
+  qt/forms/transactiondescdialog.ui \
+  qt/forms/giftcardpage.ui
 
 QT_MOC_CPP = \
   qt/moc_macdockiconhandler.cpp \
@@ -174,6 +175,12 @@ PEERCOIN_QT_H = \
   qt/walletstack.h \
   qt/walletview.h
 
+
+PEERCOIN_QT_H += \
+  qt/transactiontablemodel.h \
+  qt/contacttablemodel.h \
+  qt/giftcardtablemodel.h
+
 RES_ICONS = \
   qt/res/icons/peercoin.png \
   qt/res/icons/address-book.png \
@@ -265,6 +272,14 @@ PEERCOIN_QT_CPP += \
   qt/walletstack.cpp \
   qt/walletview.cpp
 endif
+
+PEERCOIN_QT_CPP += \
+  qt/contacttablemodel.cpp \
+  qt/contactdatamanager.cpp \
+  qt/giftcardtablemodel.cpp \
+  qt/giftcardpage.cpp \
+  qt/giftcarddatamanager.cpp \
+  qt/sharedatamanager.cpp
 
 RES_IMAGES = \
   qt/res/images/about.png \

@@ -30,6 +30,13 @@ OptionsDialog::OptionsDialog(QWidget *parent) :
 #ifndef USE_UPNP
     ui->mapPortUpnp->setEnabled(false);
 #endif
+//dvd
+    ui->minting->setEnabled(true);
+    ui->mining->setEnabled(true);
+
+    connect(ui->minting, SIGNAL(toggled(bool)), this, SLOT(on_applyButton_clicked()));
+    connect(ui->mining, SIGNAL(toggled(bool)), this, SLOT(on_applyButton_clicked()));
+
 
     ui->proxyIp->setEnabled(false);
     ui->proxyPort->setEnabled(false);

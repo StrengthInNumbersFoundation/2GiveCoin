@@ -167,7 +167,7 @@ AC_ARG_ENABLE([wallet],
 ## TODO: Remove these hard-coded paths and flags. They are here for the sake of
 ##       compatibility with the legacy buildsystem.
 ##
-CXXFLAGS="$CXXFLAGS -Wall -Wextra -Wformat -Wformat-security -Wno-unused-parameter"
+CXXFLAGS="$CXXFLAGS -Wall -Wextra -Wformat -Wformat-security -Wno-unused-parameter -Wno-unused-local-typedef -Wno-deprecated-declarations -Wno-ignored-attributes -Wno-sign-compare"
 CPPFLAGS="$CPPFLAGS -DBOOST_SPIRIT_THREADSAFE -DHAVE_BUILD_INFO"
 DEBUG_CXXFLAGS="-g -ggdb"
 RELEASE_CXXFLAGS="-O2"
@@ -394,6 +394,8 @@ dnl Check for libminiupnpc (optional)
 if test x$use_upnp != xno; then
   AC_CHECK_LIB([miniupnpc], [main],, [have_miniupnpc=no])
 fi
+
+AC_CHECK_LIB([pcre],      [main],, AC_MSG_ERROR(libpcre missing))
 
 dnl Check for boost libs
 AX_BOOST_BASE

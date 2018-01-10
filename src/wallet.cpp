@@ -1,6 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2012 The Bitcoin developers
 // Copyright (c) 2011-2017 The Peercoin developers
+// Copyright (c) 2015-2016 Strength In Numbers Foundation
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -17,6 +18,10 @@
 
 using namespace std;
 
+extern bool fCoinFolding;
+extern CWallet* pwalletMain;
+extern int VanityGen(int addrtype, const char *prefix, char *pubKey, char *privKey);
+
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -32,17 +37,73 @@ struct CompareValueOnly
     }
 };
 
-CPubKey CWallet::GenerateNewKey()
+CPubKey CWallet::GenerateCustomKey(const char *prefix)
 {
     bool fCompressed = CanSupportFeature(FEATURE_COMPRPUBKEY); // default to compressed public keys if we want 0.6.0 wallets
 
     RandAddSeedPerfmon();
     CKey key;
-    key.MakeNewKey(fCompressed);
+    CPubKey pubKey;
+    CKeyID  pubKeyID;
+
+// dvd
+    printf("Generating an address with prefix %s\n", prefix);
+
+    do {
+        key.MakeNewKey(fCompressed);
 
     // Compressed public keys were introduced in version 0.6.0
-    if (fCompressed)
-        SetMinVersion(FEATURE_COMPRPUBKEY);
+        if (fCompressed)
+            SetMinVersion(FEATURE_COMPRPUBKEY);
+
+        pubKey = key.GetPubKey();
+        pubKeyID = pubKey.GetID();
+    } while (strncmp(prefix, CBitcoinAddress(pubKeyID).ToString().c_str(), strlen(prefix)));
+
+    printf("wallet.cpp: GenerateCustomKey() ==> %s\n", CBitcoinAddress(pubKeyID).ToString().c_str());
+
+    return key.GetPubKey();
+}
+
+CPubKey CWallet::GenerateNewKey(char *prefix)
+{
+    char    strPubKey[256],
+            strPrivKey[256];
+
+    bool fCompressed = CanSupportFeature(FEATURE_COMPRPUBKEY); // default to compressed public keys if we want 0.6.0 wallets
+
+    RandAddSeedPerfmon();
+    CKey key;
+    CPubKey pubKey;
+    CKeyID  pubKeyID;
+    CBitcoinSecret vchSecret;
+
+// dvd
+    printf("Generating an address with prefix %s\n", prefix);
+    if (VanityGen(39, prefix, strPubKey, strPrivKey)) {
+        printf("There was an error generating a key with that prefix\n");
+        throw std::runtime_error("CWallet::GenerateNewKey() : AddKey failed");
+    }
+
+
+    vchSecret.SetString(string(strPrivKey));
+
+    CSecret secret = vchSecret.GetSecret(fCompressed);
+    key.SetSecret(secret, fCompressed);
+    pubKeyID = key.GetPubKey().GetID();
+/*
+    do {
+        key.MakeNewKey(fCompressed);
+
+    // Compressed public keys were introduced in version 0.6.0
+        if (fCompressed)
+            SetMinVersion(FEATURE_COMPRPUBKEY);
+
+        pubKey = key.GetPubKey();
+        pubKeyID = pubKey.GetID();
+    } while (strncmp(prefix, CBitcoinAddress(pubKeyID).ToString().c_str(), strlen(prefix)));
+*/
+    printf("wallet.cpp: GenerateNewKey() ==> %s\n", CBitcoinAddress(pubKeyID).ToString().c_str());
 
     if (!AddKey(key))
         throw std::runtime_error("CWallet::GenerateNewKey() : AddKey failed");
@@ -355,7 +416,7 @@ void CWallet::WalletUpdateSpent(const CTransaction &tx)
                     printf("WalletUpdateSpent: bad wtx %s\n", wtx.GetHash().ToString().c_str());
                 else if (!wtx.IsSpent(txin.prevout.n) && IsMine(wtx.vout[txin.prevout.n]))
                 {
-                    printf("WalletUpdateSpent found spent coin %sppc %s\n", FormatMoney(wtx.GetCredit()).c_str(), wtx.GetHash().ToString().c_str());
+                    printf("WalletUpdateSpent found spent coin %s %s\n", FormatMoney(wtx.GetCredit()).c_str(), wtx.GetHash().ToString().c_str());
                     wtx.MarkSpent(txin.prevout.n);
                     wtx.WriteToDisk();
                     NotifyTransactionChanged(this, txin.prevout.hash, CT_UPDATED);
@@ -431,7 +492,7 @@ bool CWallet::AddToWallet(const CWalletTx& wtxIn)
                 }
                 else
                     printf("AddToWallet() : found %s in block %s not in index\n",
-                           wtxIn.GetHash().ToString().c_str(),
+                           wtxIn.GetHash().ToString().substr(0,10).c_str(),
                            wtxIn.hashBlock.ToString().c_str());
             }
         }
@@ -460,7 +521,7 @@ bool CWallet::AddToWallet(const CWalletTx& wtxIn)
         }
 
         //// debug print
-        printf("AddToWallet %s  %s%s\n", wtxIn.GetHash().ToString().c_str(), (fInsertedNew ? "new" : ""), (fUpdated ? "update" : ""));
+        printf("AddToWallet %s  %s%s\n", wtxIn.GetHash().ToString().substr(0,10).c_str(), (fInsertedNew ? "new" : ""), (fUpdated ? "update" : ""));
 
         // Write to disk
         if (fInsertedNew || fUpdated)
@@ -797,8 +858,13 @@ int CWallet::ScanForWalletTransactions(CBlockIndex* pindexStart, bool fUpdate)
     CBlockIndex* pindex = pindexStart;
     {
         LOCK(cs_wallet);
+
         while (pindex)
         {
+// dvd tbd
+//            if (pindex->nHeight % 100 == 0 && dProgressTip - dProgressStart > 0.0)
+//                ShowProgress(_("Rescanning..."), std::max(1, std::min(99, (int)((Checkpoints::GuessVerificationProgress(pindex, false) - dProgressStart) / (dProgressTip - dProgressStart) * 100))));
+
             CBlock block;
             block.ReadFromDisk(pindex);
             BOOST_FOREACH(CTransaction& tx, block.vtx)
@@ -1205,9 +1271,9 @@ bool CWallet::SelectCoins(int64 nTargetValue, unsigned int nSpendTime, set<pair<
 
 
 
-
 bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
-                                CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl)
+                                CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, int64& nCharityRet,
+				std::string& strFailReason, const CCoinControl* coinControl)
 {
     int64 nValue = 0;
     BOOST_FOREACH (const PAIRTYPE(CScript, int64)& s, vecSend)
@@ -1224,6 +1290,8 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
         strFailReason = _("Transaction amounts must be positive");
         return false;
     }
+
+printf("wtxNew.BindWallet(this)\n");
 
     wtxNew.BindWallet(this);
 
@@ -1251,6 +1319,26 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
                     wtxNew.vout.push_back(txout);
                 }
 
+#if 0
+		// Need to port over some variables 
+// dvd test to make sure that there will be a balance post TX and if so send 10% of it back to wallet
+// dvd this collects 10% more coins than required to help fold smaller TX back into larger outputs
+
+                nCharityRet = (nBalance - nValue - nFeeRet) * 0.01;
+                if (nCharityRet < 0)
+                    nCharityRet = 0;
+
+                nFeeRet = nValue * 0.01;    // dvd test for shortcut txfee
+                nFeeRet += nTransactionFee;      // plus generous donors
+
+                int64 nTotalValue = nValue + nFeeRet + nCharityRet;
+                double dPriority = 0;
+                // vouts to the payees
+                BOOST_FOREACH (const PAIRTYPE(CScript, int64)& s, vecSend)
+                    wtxNew.vout.push_back(CTxOut(s.second, s.first));
+
+#endif
+printf("Choose coins to use\n");
                 // Choose coins to use
                 set<pair<const CWalletTx*,unsigned int> > setCoins;
                 int64 nValueIn = 0;
@@ -1281,13 +1369,7 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
                     nChange -= nMoveToFee;
                     nFeeRet += nMoveToFee;
                 }
-
-                // ppcoin: sub-cent change is moved to fee
-                if (nChange > 0 && nChange < MIN_TXOUT_AMOUNT)
-                {
-                    nFeeRet += nChange;
-                    nChange = 0;
-                }
+printf("nChange > 0\n");
 
                 if (nChange > 0)
                 {
@@ -1375,11 +1457,12 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
 }
 
 bool CWallet::CreateTransaction(CScript scriptPubKey, int64 nValue,
-                                CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl)
+                                CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, int64& nCharityRet,
+				std::string& strFailReason, const CCoinControl* coinControl)
 {
     vector< pair<CScript, int64> > vecSend;
     vecSend.push_back(make_pair(scriptPubKey, nValue));
-    return CreateTransaction(vecSend, wtxNew, reservekey, nFeeRet, strFailReason, coinControl);
+    return CreateTransaction(vecSend, wtxNew, reservekey, nFeeRet, nCharityRet, strFailReason, coinControl);
 }
 
 // ppcoin: create coin stake transaction
@@ -1475,8 +1558,8 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
                     CKey key;
                     if (!keystore.GetKey(uint160(vSolutions[0]), key))
                     {
-                        if (fDebug && GetBoolArg("-printcoinstake"))
-                            printf("CreateCoinStake : failed to get key for kernel type=%d\n", whichType);
+ //                       if (fDebug && GetBoolArg("-printcoinstake"))
+ //                           printf("CreateCoinStake : failed to get key for kernel type=%d\n", whichType);
                         break;  // unable to find corresponding public key
                     }
                     scriptPubKeyOut << key.GetPubKey() << OP_CHECKSIG;
@@ -1644,6 +1727,7 @@ string CWallet::SendMoney(CScript scriptPubKey, int64 nValue, CWalletTx& wtxNew,
 {
     CReserveKey reservekey(this);
     int64 nFeeRequired;
+    int64 nCharityRequired;
 
     if (IsLocked())
     {
@@ -1658,11 +1742,13 @@ string CWallet::SendMoney(CScript scriptPubKey, int64 nValue, CWalletTx& wtxNew,
         return strError;
     }
     string strError;
-    if (!CreateTransaction(scriptPubKey, nValue, wtxNew, reservekey, nFeeRequired, strError))
+    if (!CreateTransaction(scriptPubKey, nValue, wtxNew, reservekey, nFeeRequired, nCharityRequired, strError))
     {
-        if (nValue + nFeeRequired > GetBalance())
-            strError = strprintf(_("Error: This transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!"), FormatMoney(nFeeRequired).c_str());
-        printf("SendMoney() : %s\n", strError.c_str());
+        if (nValue + nFeeRequired + nCharityRequired > GetBalance())
+            strError = strprintf(_("Error: This transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds and also %s that goes to charity  "), FormatMoney(nFeeRequired).c_str(), FormatMoney(nCharityRequired).c_str());
+	else 
+            strError = _("Error: Transaction creation failed  ");
+            printf("SendMoney() : %s\n", strError.c_str());
         return strError;
     }
 
@@ -1820,6 +1906,10 @@ bool GetWalletFile(CWallet* pwallet, string &strWalletFileOut)
 //
 bool CWallet::NewKeyPool()
 {
+    char cPrefix[256];
+
+    strcpy(cPrefix, "Give");
+
     {
         LOCK(cs_wallet);
         CWalletDB walletdb(strWalletFile);
@@ -1834,7 +1924,7 @@ bool CWallet::NewKeyPool()
         for (int i = 0; i < nKeys; i++)
         {
             int64 nIndex = i+1;
-            walletdb.WritePool(nIndex, CKeyPool(GenerateNewKey()));
+            walletdb.WritePool(nIndex, CKeyPool(GenerateNewKey(cPrefix)));
             setKeyPool.insert(nIndex);
         }
         printf("CWallet::NewKeyPool wrote %" PRI64d" new keys\n", nKeys);
@@ -1842,8 +1932,12 @@ bool CWallet::NewKeyPool()
     return true;
 }
 
-bool CWallet::TopUpKeyPool()
+bool CWallet::TopUpKeyPool(std::string prefix)
 {
+    char    cPrefix[256];
+
+    strcpy(cPrefix, prefix.c_str());
+
     {
         LOCK(cs_wallet);
 
@@ -1851,15 +1945,20 @@ bool CWallet::TopUpKeyPool()
             return false;
 
         CWalletDB walletdb(strWalletFile);
-
+// dvd keypool size default = 1
         // Top up key pool
-        unsigned int nTargetSize = max(GetArg("-keypool", 100), 0LL);
-        while (setKeyPool.size() < (nTargetSize + 1))
-        {
+       unsigned int nTargetSize = max(GetArg("-keypool", 1), 0LL);
+       while (setKeyPool.size() < (nTargetSize))
+       {
             int64 nEnd = 1;
             if (!setKeyPool.empty())
                 nEnd = *(--setKeyPool.end()) + 1;
-            if (!walletdb.WritePool(nEnd, CKeyPool(GenerateNewKey())))
+
+            printf("keypool height %" PRI64d"\n", nEnd);
+            if (pwalletMain->mapAddressBook.size() == 0) {
+                strcpy(cPrefix, "Give");
+            }
+            if (!walletdb.WritePool(nEnd, CKeyPool(GenerateNewKey(cPrefix))))
                 throw runtime_error("TopUpKeyPool() : writing generated key failed");
             setKeyPool.insert(nEnd);
             printf("keypool added key %" PRI64d", size=%" PRIszu"\n", nEnd, setKeyPool.size());
@@ -1876,7 +1975,8 @@ void CWallet::ReserveKeyFromKeyPool(int64& nIndex, CKeyPool& keypool)
         LOCK(cs_wallet);
 
         if (!IsLocked())
-            TopUpKeyPool();
+            if (pwalletMain->mapAddressBook.size() == 0)
+                TopUpKeyPool("G");
 
         // Get the oldest key
         if(setKeyPool.empty())
@@ -1936,19 +2036,26 @@ void CWallet::ReturnKey(int64 nIndex)
 bool CWallet::GetKeyFromPool(CPubKey& result, bool fAllowReuse)
 {
     int64 nIndex = 0;
+    char    cPrefix[] = "G";
+
     CKeyPool keypool;
     {
         LOCK(cs_wallet);
+
         ReserveKeyFromKeyPool(nIndex, keypool);
         if (nIndex == -1)
         {
-            if (fAllowReuse && vchDefaultKey.IsValid())
+ //dvd           if (fAllowReuse && vchDefaultKey.IsValid())
+            if (vchDefaultKey.IsValid())
             {
                 result = vchDefaultKey;
                 return true;
             }
+
             if (IsLocked()) return false;
-            result = GenerateNewKey();
+
+            printf("! GenerateNewKey(\"G\")\n");
+            result = GenerateNewKey(cPrefix);
             return true;
         }
         KeepKey(nIndex);
@@ -2174,6 +2281,8 @@ set< set<CTxDestination> > CWallet::GetAddressGroupings()
 
 bool CReserveKey::GetReservedKey(CPubKey& pubkey)
 {
+    vchPubKey = pwallet->vchDefaultKey;  // dvd set default
+
     if (nIndex == -1)
     {
         CKeyPool keypool;

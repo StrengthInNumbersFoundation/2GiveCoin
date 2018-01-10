@@ -85,7 +85,8 @@ BITCOIN_CORE_H = \
   util.h \
   version.h \
   walletdb.h \
-  wallet.h
+  wallet.h \
+  vanitygen.h
 
 JSON_H = \
   json/json_spirit.h \
@@ -128,6 +129,7 @@ libpeercoin_server_a_SOURCES = \
   $(BITCOIN_CORE_H)
 
 libpeercoin_wallet_a_SOURCES = \
+  vanitygen.cpp \
   db.cpp \
   rpcdump.cpp \
   rpcmining.cpp \

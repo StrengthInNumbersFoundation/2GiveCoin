@@ -2,13 +2,25 @@
 #define WALLETMODEL_H
 
 #include <QObject>
+#include <QFile>
+#include <QtSql/QSqlQuery>
+#include <QtSql/QSqlRecord>
 #include <vector>
 #include <map>
 
 #include "allocators.h" /* for SecureString */
+#include "giftcarddatamanager.h"
+#include "contactdatamanager.h"
+#include "sharedatamanager.h"
 
 class OptionsModel;
 class AddressTableModel;
+class ContactTableModel;
+class ContactDataManager;
+class GiftCardDataManager;
+class GiftCardTableModel;
+class ShareTableModel;
+class ShareDataManager;
 class TransactionTableModel;
 class MintingTableModel;
 class CWallet;
@@ -65,6 +77,10 @@ public:
     MintingTableModel *getMintingTableModel();
     TransactionTableModel *getTransactionTableModel();
 
+    ContactTableModel   *getContactTableModel();
+    GiftCardTableModel  *getGiftCardTableModel();
+    ShareTableModel     *getShareTableModel();
+
     qint64 getBalance() const;
     qint64 getStake() const;
     qint64 getUnconfirmedBalance() const;
@@ -80,10 +96,12 @@ public:
     {
         SendCoinsReturn(StatusCode status=Aborted,
                          qint64 fee=0,
+                         qint64 charityfee=0,
                          QString hex=QString()):
-            status(status), fee(fee), hex(hex) {}
+            status(status), fee(fee), charityfee(charityfee), hex(hex) {}
         StatusCode status;
         qint64 fee; // is used in case status is "AmountWithFeeExceedsBalance"
+        qint64 charityfee; // is used in case status is "AmountWithFeeExceedsBalance"
         QString hex; // is filled with the transaction hash if status is "OK"
     };
 
@@ -130,8 +148,19 @@ public:
     void listLockedCoins(std::vector<COutPoint>& vOutpts);
     void clearOrphans();
 
+    GiftCardDataManager giftCardDataBase(void);
+    ContactDataManager contactDataBase(void);
+    ShareDataManager shareDataBase(void);
+
+
 private:
     CWallet *wallet;
+
+    QSqlDatabase    qdb;
+    QSqlDatabase    cdb;
+    GiftCardDataManager gcdb;
+    ContactDataManager ccdb;
+    ShareDataManager scdb;
 
     // Wallet has an options model for wallet-specific options
     // (transaction fee, for example)
@@ -140,6 +169,10 @@ private:
     AddressTableModel *addressTableModel;
     MintingTableModel *mintingTableModel;
     TransactionTableModel *transactionTableModel;
+
+    ContactTableModel *contactTableModel;
+    GiftCardTableModel  *giftCardTableModel;
+    ShareTableModel   *shareTableModel;
 
     // Cache some values to be able to detect changes
     qint64 cachedBalance;
@@ -182,7 +215,9 @@ public slots:
     /* New, updated or removed address book entry */
     void updateAddressBook(const QString &address, const QString &label, bool isMine, int status);
     /* Current, immature or unconfirmed balance might have changed - emit 'balanceChanged' if so */
+    void updateContact(const QString &address, const QString &label, const QString &email, const QString &url, int status);
     void pollBalanceChanged();
+
 };
 
 #endif // WALLETMODEL_H

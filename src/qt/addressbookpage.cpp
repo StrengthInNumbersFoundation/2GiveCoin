@@ -9,6 +9,7 @@
 #include "optionsmodel.h"
 #include "bitcoingui.h"
 #include "editaddressdialog.h"
+#include "importkeydialog.h"
 #include "csvmodelwriter.h"
 #include "guiutil.h"
 
@@ -71,6 +72,7 @@ AddressBookPage::AddressBookPage(Mode mode, Tabs tab, QWidget *parent) :
     }
 
     // Context menu actions
+    QAction *giveAction = new QAction(tr("Give"), this);
     QAction *copyAddressAction = new QAction(ui->copyAddress->text(), this);
     QAction *copyLabelAction = new QAction(tr("Copy &Label"), this);
     QAction *editAction = new QAction(tr("&Edit"), this);
@@ -82,6 +84,7 @@ AddressBookPage::AddressBookPage(Mode mode, Tabs tab, QWidget *parent) :
 
     // Build context menu
     contextMenu = new QMenu();
+    contextMenu->addAction(giveAction);
     contextMenu->addAction(copyAddressAction);
     contextMenu->addAction(copyLabelAction);
     contextMenu->addAction(editAction);
@@ -99,6 +102,9 @@ AddressBookPage::AddressBookPage(Mode mode, Tabs tab, QWidget *parent) :
         contextMenu->addAction(verifyMessageAction);
 
     // Connect signals for context menu actions
+    connect(giveAction, SIGNAL(triggered()), this, SLOT(on_giveButton_clicked()));
+    //connect(importAction, SIGNAL(triggered()), this, SLOT(on_importButton_clicked()));
+
     connect(copyAddressAction, SIGNAL(triggered()), this, SLOT(on_copyAddress_clicked()));
     connect(copyLabelAction, SIGNAL(triggered()), this, SLOT(onCopyLabelAction()));
     connect(editAction, SIGNAL(triggered()), this, SLOT(onEditAction()));
@@ -163,6 +169,27 @@ void AddressBookPage::setModel(AddressTableModel *model)
     connect(model, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(selectNewAddress(QModelIndex,int,int)));
 
     selectionChanged();
+}
+
+void AddressBookPage::on_giveButton_clicked()
+{
+    QTableView *table = ui->tableView;
+    QModelIndex index;
+
+    if (!table->selectionModel())
+        return;
+
+    QModelIndexList indexes = table->selectionModel()->selectedRows(1);
+    if(!indexes.isEmpty())
+    {
+        index = indexes.at(0);
+
+        QString pubKey = index.data().toString(), label = index.sibling(index.row(), 0).data(Qt::EditRole).toString();
+
+        QMetaObject::invokeMethod(this->parent()->parent(), "gotoSendCoinsGiftPage", GUIUtil::blockingGUIThreadConnection(),
+                                  Q_ARG(QString, pubKey),
+                                  Q_ARG(QString, label));
+    }
 }
 
 void AddressBookPage::setOptionsModel(OptionsModel *optionsModel)
@@ -276,6 +303,7 @@ void AddressBookPage::selectionChanged()
         {
         case SendingTab:
             // In sending tab, allow deletion of selection
+            ui->giveButton->setEnabled(true);
             ui->deleteAddress->setEnabled(true);
             ui->deleteAddress->setVisible(true);
             deleteAction->setEnabled(true);
@@ -286,6 +314,7 @@ void AddressBookPage::selectionChanged()
             break;
         case ReceivingTab:
             // Deleting receiving addresses, however, is not allowed
+            ui->giveButton->setEnabled(true);
             ui->deleteAddress->setEnabled(false);
             ui->deleteAddress->setVisible(false);
             deleteAction->setEnabled(false);
@@ -300,6 +329,7 @@ void AddressBookPage::selectionChanged()
     }
     else
     {
+        ui->giveButton->setEnabled(false);
         ui->deleteAddress->setEnabled(false);
         ui->showQRCode->setEnabled(false);
         ui->copyAddress->setEnabled(false);

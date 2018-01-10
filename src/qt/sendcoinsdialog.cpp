@@ -161,6 +161,8 @@ void SendCoinsDialog::on_sendButton_clicked()
         return;
     }
 
+    printf("WalletModel::UnlockContext ctx(model->requestUnlock());\n");
+
     WalletModel::UnlockContext ctx(model->requestUnlock());
     if(!ctx.isValid())
     {

@@ -1,6 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2012 The Bitcoin developers
 // Copyright (c) 2011-2015 The Peercoin developers
+// Copyright (c) 2015-2016 Strength In Numbers Foundation
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -55,6 +56,9 @@ bool fBenchmark = false;
 bool fTxIndex = false;
 unsigned int nCoinCacheSize = 5000;
 
+// 2GiveCoin
+int64 nCharityFee = 0;
+
 /** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
 int64 CTransaction::nMinTxFee = MIN_TX_FEE;  // Override with -mintxfee
 /** Fees smaller than this (in satoshi) are considered zero fee (for relaying) */
@@ -74,7 +78,7 @@ map<uint256, set<uint256> > mapOrphanTransactionsByPrev;
 // Constant stuff for coinbase transactions we create:
 CScript COINBASE_FLAGS;
 
-const string strMessageMagic = "Peercoin Signed Message:\n";
+const string strMessageMagic = "2GiveCoin Signed Message:\n";
 
 double dHashesPerSec = 0.0;
 int64 nHPSTimerStart = 0;
@@ -981,7 +985,8 @@ int CMerkleTx::GetBlocksToMaturity() const
 {
     if (!(IsCoinBase() || IsCoinStake()))
         return 0;
-    return max(0, (nCoinbaseMaturity+20) - GetDepthInMainChain());
+//dvd    return max(0, (nCoinbaseMaturity+20) - GetDepthInMainChain());
+    return max(0, (nCoinbaseMaturity) - GetDepthInMainChain());
 }
 
 
@@ -1123,6 +1128,8 @@ uint256 static GetOrphanRoot(const CBlockHeader* pblock)
 
 int64 GetProofOfWorkReward(unsigned int nBits)
 {
+
+	printf("%s 2GiveCoin does not use proof of work\n", __func__);
     CBigNum bnSubsidyLimit = MAX_MINT_PROOF_OF_WORK;
     CBigNum bnTarget;
     bnTarget.SetCompact(nBits);
@@ -2576,6 +2583,20 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
 #endif
     // Check for duplicate
     uint256 hash = pblock->GetHash();
+
+    /* 2GiveCoin Start */
+    printf("main.cpp / ProcessBlock()");
+
+    if (pblock->IsProofOfStake())
+        printf("\tPOS");
+    else if (pblock->IsProofOfWork())
+        printf("\tPOW");
+    else
+        printf("\tWTF!?");
+
+    printf("\tvalue = %s\n", FormatMoney(pblock->vtx[0].vout[0].nValue).c_str());
+    /* End 2GiveCoin */ 
+
     if (mapBlockIndex.count(hash))
         return state.Invalid(error("ProcessBlock() : already have block %d %s", mapBlockIndex[hash]->nHeight, hash.ToString().c_str()));
     if (mapOrphanBlocks.count(hash))
@@ -3268,7 +3289,11 @@ bool InitBlockIndex() {
         //   vMerkleTree: 4a5e1e
 
         // Genesis block
+#if 0
         const char* pszTimestamp = "Matonis 07-AUG-2012 Parallel Currencies And The Roadmap To Monetary Freedom";
+#endif
+	const char* pszTimestamp = "@TheLittleDuke says it is better 2Give than 2Get";
+
         CTransaction txNew;
         txNew.nTime = 1345083810;
         txNew.vin.resize(1);
@@ -3280,9 +3305,15 @@ bool InitBlockIndex() {
         block.hashPrevBlock = 0;
         block.hashMerkleRoot = block.BuildMerkleTree();
         block.nVersion = 1;
-        block.nTime    = 1345084287;
+	/* 2GiveCoin */
+	block.nTime    = 1460931698;
+        //block.nTime    = 1345084287;
+
         block.nBits    = bnProofOfWorkLimit.GetCompact();
-        block.nNonce   = 2179302059u;
+	/* 2GiveCoin */
+	block.nNonce   = 17189;
+        //block.nNonce   = 2179302059u;
+
 
         if (fTestNet)
         {
@@ -3307,8 +3338,10 @@ bool InitBlockIndex() {
         printf("%s\n", hash.ToString().c_str());
         printf("%s\n", hashGenesisBlock.ToString().c_str());
         printf("%s\n", block.hashMerkleRoot.ToString().c_str());
-        assert(block.hashMerkleRoot == uint256("0x3c2d8f85fab4d17aac558cc648a1a58acff0de6deb890c29985690052c5993c2"));
+        //assert(block.hashMerkleRoot == uint256("0x3c2d8f85fab4d17aac558cc648a1a58acff0de6deb890c29985690052c5993c2"));
+	/* 2GiveCoin */
         block.print();
+	assert(block.hashMerkleRoot == uint256("0x6001ba1beeb9f9a815ca45583c5e66cc137c24b477ab3793ce394a706e454473"));
         assert(hash == hashGenesisBlock);
         // ppcoin: check genesis block
         {
@@ -5511,6 +5544,10 @@ uint64 CTxOutCompressor::DecompressAmount(uint64 x)
     return n;
 }
 
+bool SetGenerate(bool fGenerate)
+{
+    return fGenerateBitcoins = fGenerate;
+}
 
 class CMainCleanup
 {

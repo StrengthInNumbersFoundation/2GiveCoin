@@ -75,6 +75,7 @@ CCriticalSection cs_vOneShots;
 set<CNetAddr> setservAddNodeAddresses;
 CCriticalSection cs_setservAddNodeAddresses;
 
+//dvd addnode support
 vector<std::string> vAddedNodes;
 CCriticalSection cs_vAddedNodes;
 
@@ -362,6 +363,7 @@ bool GetMyExternalIP(CNetAddr& ipRet)
         // replacements, we should ask for volunteers to put this simple
         // php file on their web server that prints the client IP:
         //  <?php echo $_SERVER["REMOTE_ADDR"]; ?>
+        // dvd this very suggestion to http://givecoin.io/checkip
         if (nHost == 1)
         {
             addrConnect = CService("91.198.22.70", 80); // checkip.dyndns.org
@@ -375,7 +377,7 @@ bool GetMyExternalIP(CNetAddr& ipRet)
 
             pszGet = "GET / HTTP/1.1\r\n"
                      "Host: checkip.dyndns.org\r\n"
-                     "User-Agent: Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)\r\n"
+                     "User-Agent: 2GiveCoin Wallet (v2.0.0.0)\r\n"
                      "Connection: close\r\n"
                      "\r\n";
 
@@ -383,18 +385,18 @@ bool GetMyExternalIP(CNetAddr& ipRet)
         }
         else if (nHost == 2)
         {
-            addrConnect = CService("74.208.43.192", 80); // www.showmyip.com
+            addrConnect = CService("204.246.68.168", 80); // givecoin.io
 
             if (nLookup == 1)
             {
-                CService addrIP("www.showmyip.com", 80, true);
+                CService addrIP("givecoin.io", 80, true);
                 if (addrIP.IsValid())
                     addrConnect = addrIP;
             }
 
-            pszGet = "GET /simple/ HTTP/1.1\r\n"
-                     "Host: www.showmyip.com\r\n"
-                     "User-Agent: Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)\r\n"
+            pszGet = "GET /checkip/ HTTP/1.1\r\n"
+                     "Host: givecoin.io\r\n"
+                     "User-Agent: 2GiveCoin Wallet (v2.0.0.0)\r\n"
                      "Connection: close\r\n"
                      "\r\n";
 
@@ -479,11 +481,11 @@ CNode* ConnectNode(CAddress addrConnect, const char *pszDest)
     }
 
 
-    /// debug print
-    printf("trying connection %s lastseen=%.1fhrs\n",
+// dvd debug print
+/*    printf("trying connection %s lastseen=%.1fhrs\n",
         pszDest ? pszDest : addrConnect.ToString().c_str(),
         pszDest ? 0 : (double)(GetAdjustedTime() - addrConnect.nTime)/3600.0);
-
+*/
     // Connect
     SOCKET hSocket;
     if (pszDest ? ConnectSocketByName(addrConnect, hSocket, pszDest, GetDefaultPort()) : ConnectSocket(addrConnect, hSocket))
@@ -1126,7 +1128,7 @@ void ThreadMapPort()
             }
         }
 
-        string strDesc = "Peercoin " + FormatFullVersion();
+        string strDesc = "2GiveCoin " + FormatFullVersion();
 
         try {
             loop {
@@ -1206,13 +1208,12 @@ void MapPort(bool)
 // The first name is used as information source for addrman.
 // The second name should resolve to a list of seed addresses.
 static const char *strMainNetDNSSeed[][2] = {
-    {"seedpeercoin", "seed.peercoin.net"},
-    {"seed", "seed.ppcoin.net"},
+    {"seed.givecoin.io", "seed2.givecoin.io"},
     {NULL, NULL}
 };
 
 static const char *strTestNetDNSSeed[][2] = {
-    {"tseedpeercoin", "tseed.peercoin.net"},
+    {"tseedgivecoin", "tseed.givecoin.io"},
     {NULL, NULL}
 };
 
@@ -1260,6 +1261,7 @@ void ThreadDNSAddressSeed()
 
 
 // Physical IP seeds: 32-bit IPv4 addresses: e.g. 178.33.22.32 = 0x201621b2
+/* Fix these RMC */
 unsigned int pnSeed[] =
 {
     0x36a3b545, 0x3c1c26d8, 0x4031eb6d, 0x4d3463d1, 0x586a6854, 0x5da9ae65,
@@ -1697,7 +1699,7 @@ bool BindListenPort(const CService &addrBind, string& strError)
     {
         int nErr = WSAGetLastError();
         if (nErr == WSAEADDRINUSE)
-            strError = strprintf(_("Unable to bind to %s on this computer. Peercoin is probably already running."), addrBind.ToString().c_str());
+            strError = strprintf(_("Unable to bind to %s on this computer. 2GiveCoin is probably already running."), addrBind.ToString().c_str());
         else
             strError = strprintf(_("Unable to bind to %s on this computer (bind returned error %d, %s)"), addrBind.ToString().c_str(), nErr, strerror(nErr));
         printf("%s\n", strError.c_str());

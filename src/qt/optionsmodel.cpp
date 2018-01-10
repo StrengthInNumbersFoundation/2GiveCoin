@@ -46,6 +46,8 @@ void OptionsModel::Init()
 {
     QSettings settings;
 
+    printf("OptionsModel::Init()\n");
+
     // These are Qt-only settings:
     nDisplayUnit = settings.value("nDisplayUnit", BitcoinUnits::BTC).toInt();
     bDisplayAddresses = settings.value("bDisplayAddresses", false).toBool();
