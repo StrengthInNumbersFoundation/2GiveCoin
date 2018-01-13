@@ -231,7 +231,7 @@ bool ShareDataManager::updateCampaigns(void)
     CURLcode res;
     FILE     *fp;
 
-    char *url = "http://2Give.Info/campaigns/campaigns.sqlite3";
+    const char *url = "http://2Give.Info/campaigns/campaigns.sqlite3";
 
     boost::filesystem::path pathSrc = GetDataDir();
 

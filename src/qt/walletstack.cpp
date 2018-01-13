@@ -118,6 +118,12 @@ void WalletStack::gotoSendCoinsPage(QString addr)
         i.value()->gotoSendCoinsPage(addr);
 }
 
+void BitcoinGUI::gotoGiftCoinsPage(QString addr)
+{}
+	
+void BitcoinGUI::gotoSendCoinsGiftPage(QString addr)
+{}
+
 void WalletStack::gotoSignMessageTab(QString addr)
 {
     WalletView *walletView = (WalletView*)currentWidget();

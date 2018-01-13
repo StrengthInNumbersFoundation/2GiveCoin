@@ -573,6 +573,38 @@ void BitcoinGUI::gotoVerifyMessageTab(QString addr)
     if (walletFrame) walletFrame->gotoVerifyMessageTab(addr);
 }
 
+void BitcoinGUI::gotoGiftCoinsPage(QString addr)
+{
+#if 0
+    giftCoinsAction->setChecked(true);
+    centralWidget->setCurrentWidget(giftCoinsPage);
+
+    exportAction->setEnabled(true);
+    disconnect(exportAction, SIGNAL(triggered()), 0, 0);
+    connect(exportAction, SIGNAL(triggered()), giftCoinsPage, SLOT(exportClicked()));
+#endif
+}
+
+void BitcoinGUI::gotoSendCoinsGiftPage(QString addr)
+{
+#if 0
+    sendCoinsAction->setChecked(true);
+    centralWidget->setCurrentWidget(sendCoinsPage);
+    //charitySendAction->setEnabled(false);
+    //SendCoinsEntry *entry = qobject_cast<SendCoinsEntry*>(sendCoinsPage->entries->itemAt(i)->widget());
+    SendCoinsRecipient rv;
+    rv.address = addr;
+    rv.label = label;
+    rv.amount = CHARITY_DEFAULT_AMOUNT;
+
+    sendCoinsPage->pasteEntry(rv, true);
+
+    exportAction->setEnabled(false);
+    disconnect(exportAction, SIGNAL(triggered()), 0, 0);
+#endif
+}
+
+
 void BitcoinGUI::openChatroom() {
     QDesktopServices::openUrl(QUrl("https://peercoin.chat"));
 }
