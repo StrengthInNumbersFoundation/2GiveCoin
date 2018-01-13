@@ -86,7 +86,8 @@ BITCOIN_CORE_H = \
   version.h \
   walletdb.h \
   wallet.h \
-  vanitygen.h
+  vanitygen.h \
+  scrypt_mine.h
 
 JSON_H = \
   json/json_spirit.h \
@@ -126,7 +127,9 @@ libpeercoin_server_a_SOURCES = \
   rpcserver.cpp \
   txdb.cpp \
   $(JSON_H) \
-  $(BITCOIN_CORE_H)
+  $(BITCOIN_CORE_H) \
+  scrypt_mine.cpp \
+  pbkdf2.cpp
 
 libpeercoin_wallet_a_SOURCES = \
   vanitygen.cpp \
@@ -206,6 +209,9 @@ clean-local:
 .mm.o:
 	$(OBJC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	  $(CPPFLAGS) $(AM_CXXFLAGS) $(QT_INCLUDES) $(CXXFLAGS)  -c -o $@ $<
+
+scrypt-x86_64.o: scrypt-x86_64.S
+	$(CXX) -c $(xCXXFLAGS) -MMD -o $@ $<
 
 LIBPEERCOIN_SERVER=libpeercoin_server.a
 LIBPEERCOIN_WALLET=libpeercoin_wallet.a

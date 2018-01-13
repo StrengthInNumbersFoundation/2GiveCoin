@@ -31,7 +31,9 @@ const unsigned int nProtocolV06TestSwitchTime = 1508198400; // Tue 17 Oct 00:00:
 unsigned int nModifierInterval = MODIFIER_INTERVAL;
 
 // Hard checkpoints of stake modifiers to ensure they are deterministic
-static std::map<int, unsigned int> mapStakeModifierCheckpoints =
+static std::map<int, unsigned int> mapStakeModifierCheckpoints
+#if 0
+=
     boost::assign::map_list_of
     ( 0, 0x0e00670bu )
     ( 19080, 0xad4e4d29u )
@@ -39,6 +41,7 @@ static std::map<int, unsigned int> mapStakeModifierCheckpoints =
     ( 99999, 0xf555cfd2u )
     (219999, 0x91b7444du )
     (336000, 0x6c3c8048u )
+#endif
     ;
 
 // Whether the given coinstake is subject to new v0.3 protocol
@@ -105,7 +108,11 @@ static int64 GetStakeModifierSelectionInterval()
     int64 nSelectionInterval = 0;
     for (int nSection=0; nSection<64; nSection++)
         nSelectionInterval += GetStakeModifierSelectionIntervalSection(nSection);
-    return nSelectionInterval;
+
+    /* 2GiveCoin */
+    return 42301;   // (11h45mn01s)
+
+    //    return nSelectionInterval;
 }
 
 // select a block from the candidate blocks in vSortedByTimestamp, excluding
@@ -395,13 +402,11 @@ static bool GetKernelStakeModifier(uint256 hashBlockFrom, unsigned int nTimeTx, 
 bool CheckStakeKernelHash(unsigned int nBits, const CBlockHeader& blockFrom, unsigned int nTxPrevOffset, const CTransaction& txPrev, const COutPoint& prevout, unsigned int nTimeTx, uint256& hashProofOfStake, bool fPrintProofOfStake)
 {
     if (nTimeTx < txPrev.nTime)  // Transaction timestamp violation
-        return false;
-//dvd        return error("CheckStakeKernelHash() : nTime violation");
+      return error("CheckStakeKernelHash() : nTime violation");
 
     unsigned int nTimeBlockFrom = blockFrom.GetBlockTime();
     if (nTimeBlockFrom + nStakeMinAge > nTimeTx) // Min age requirement
-        return false;
-//dvd      return error("CheckStakeKernelHash() : min age violation");
+      return error("CheckStakeKernelHash() : min age violation");
 
     CBigNum bnTargetPerCoinDay;
     bnTargetPerCoinDay.SetCompact(nBits);

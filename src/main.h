@@ -15,6 +15,9 @@
 #include "sync.h"
 #include "net.h"
 #include "script.h"
+#include "scrypt_mine.h"
+#include "scrypt.h"
+#include "pbkdf2.h"
 
 #include <list>
 
@@ -34,7 +37,9 @@ class CCoinControl;
 struct CBlockIndexWorkComparator;
 
 /** The maximum allowed size for a serialized block, in bytes (network rule) */
-static const unsigned int MAX_BLOCK_SIZE = 1000000;
+//static const unsigned int MAX_BLOCK_SIZE = 1000000;
+/* 2GiveCoin */
+static const unsigned int MAX_BLOCK_SIZE = 1500000;
 /** Obsolete: maximum size for mined blocks */
 static const unsigned int MAX_BLOCK_SIZE_GEN = MAX_BLOCK_SIZE/2;
 /** Default for -blockmaxsize, maximum size for mined blocks **/
@@ -46,7 +51,9 @@ static const unsigned int MAX_STANDARD_TX_SIZE = 100000;
 /** The maximum allowed number of signature check operations in a block (network rule) */
 static const unsigned int MAX_BLOCK_SIGOPS = MAX_BLOCK_SIZE/50;
 /** Default for -maxorphantx, maximum number of orphan transactions kept in memory */
-static const unsigned int DEFAULT_MAX_ORPHAN_TRANSACTIONS = 100;
+//static const unsigned int DEFAULT_MAX_ORPHAN_TRANSACTIONS = 100;
+/* 2GiveCoin */
+static const unsigned int DEFAULT_MAX_ORPHAN_TRANSACTIONS = MAX_BLOCK_SIZE/100;
 /** The maximum number of entries in an 'inv' protocol message */
 static const unsigned int MAX_INV_SZ = 50000;
 /** Default for -maxorphanblocks, maximum number of orphan blocks kept in memory */
@@ -60,12 +67,14 @@ static const unsigned int UNDOFILE_CHUNK_SIZE = 0x100000; // 1 MiB
 /** Fake height value used in CCoins to signify they are only in the memory pool (since 0.8) */
 static const unsigned int MEMPOOL_HEIGHT = 0x7FFFFFFF;
 /** No amount larger than this (in satoshi) is valid */
-static const int64 MAX_MONEY = 2000000000 * COIN;
+//static const int64 MAX_MONEY = 2000000000 * COIN;
+static const int64 MAX_MONEY = 1000000000 * COIN;			// 1 billion
 inline bool MoneyRange(int64 nValue) { return (nValue >= 0 && nValue <= MAX_MONEY); }
 #if 0 /* peercoin defaults */
 static const int64 MIN_TX_FEE = CENT;
 static const int64 MIN_RELAY_TX_FEE = CENT;
 #else
+/* 2GiveCoin */
 static const int64 MIN_TX_FEE = 0;
 static const int64 MIN_RELAY_TX_FEE = 0;
 #endif
@@ -74,7 +83,8 @@ static const int64 MIN_TXOUT_AMOUNT = MIN_TX_FEE;
 /** Coinbase transaction outputs can only be spent after this number of new blocks (network rule) */
 static const int COINBASE_MATURITY_PPC = 500;
 /** Threshold for nLockTime: below this value it is interpreted as block number, otherwise as UNIX timestamp. */
-static const int STAKE_TARGET_SPACING = 10 * 60; // 10-minute block spacing 
+/* 2GiveCoin */
+static const int STAKE_TARGET_SPACING = 120;
 static const int STAKE_MIN_AGE = 60 * 60 * 24 * 30; // minimum age for coin age
 static const int STAKE_MAX_AGE = 60 * 60 * 24 * 90; // stake age of full weight
 /** Maximum number of script-checking threads allowed */
@@ -740,8 +750,8 @@ public:
     {
         std::string str;
         str += IsCoinBase()? "Coinbase" : (IsCoinStake()? "Coinstake" : "CTransaction");
-        str += strprintf("(hash=%s, nTime=%u, ver=%d, vin.size=%" PRIszu", vout.size=%" PRIszu", nLockTime=%u)\n",
-            GetHash().ToString().c_str(),
+        str += strprintf("(hash=%s, nTime=%d, ver=%d, vin.size=%" PRIszu", vout.size=%" PRIszu", nLockTime=%d)\n",
+            GetHash().ToString().substr(0,10).c_str(),
             nTime,
             nVersion,
             vin.size(),
@@ -1412,7 +1422,7 @@ class CBlockHeader
 {
 public:
     // header
-    static const int CURRENT_VERSION=2;
+    static const int CURRENT_VERSION=4;
     int nVersion;
     uint256 hashPrevBlock;
     uint256 hashMerkleRoot;
@@ -1451,10 +1461,27 @@ public:
         return (nBits == 0);
     }
 
+#if 0
     uint256 GetHash() const
     {
         return Hash(BEGIN(nVersion), END(nNonce));
     }
+#endif
+
+    uint256 GetHash() const
+    {
+        uint256 thash;
+        void * scratchbuff = scrypt_buffer_alloc();
+
+	//printf("%s sizeof  CBlockHeader %lu block_header %lu start 0x%p\n", __func__, sizeof(CBlockHeader), sizeof(block_header), CVOIDBEGIN(nVersion));	
+
+        scrypt_hash(CVOIDBEGIN(nVersion), sizeof(block_header), UINTBEGIN(thash), scratchbuff);
+
+        scrypt_buffer_free(scratchbuff);
+
+        return thash;
+    }
+
 
     int64 GetBlockTime() const
     {

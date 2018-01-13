@@ -288,7 +288,7 @@ struct CImportingNow
 
 void ThreadImport(std::vector<boost::filesystem::path> vImportFiles)
 {
-    RenameThread("2GiveCoin-loadblk");
+    RenameThread("peercoin-loadblk");
 
     // -reindex
     if (fReindex) {

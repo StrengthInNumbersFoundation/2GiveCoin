@@ -37,9 +37,15 @@ unsigned int nTransactionsUpdated = 0;
 map<uint256, CBlockIndex*> mapBlockIndex;
 set<pair<COutPoint, unsigned int> > setStakeSeen;
 uint256 hashGenesisBlock = hashGenesisBlockOfficial;
-static CBigNum bnProofOfWorkLimit(~uint256(0) >> 32);
-static CBigNum bnInitialHashTarget(~uint256(0) >> 40);
-unsigned int nStakeMinAge = STAKE_MIN_AGE;
+/* 2GiveCoin changes */
+static CBigNum bnProofOfWorkLimit(~uint256(0) >> 20);
+static CBigNum bnInitialHashTarget(~uint256(0) >> 20);
+//static CBigNum bnProofOfWorkLimit(~uint256(0) >> 32);
+//static CBigNum bnInitialHashTarget(~uint256(0) >> 40);
+
+//unsigned int nStakeMinAge = STAKE_MIN_AGE;
+unsigned int nStakeMinAge = 60 * 60 * 24 * 30;	// 30 day eligibilty for staking
+/* End */
 int nCoinbaseMaturity = COINBASE_MATURITY_PPC;
 CBlockIndex* pindexGenesisBlock = NULL;
 int nBestHeight = -1;
@@ -1269,9 +1275,15 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits)
     if (bnTarget <= 0 || bnTarget > bnProofOfWorkLimit)
         return error("CheckProofOfWork() : nBits below minimum work");
 
-    // Check proof of work matches claimed amount
-    if (hash > bnTarget.getuint256())
+    // Check proof of work matches claimed amount:1
+   
+    if (hash > bnTarget.getuint256()) {
+	    uint256 bnt_hash = bnTarget.getuint256();
+	    printf("hash %s bnTarget %s\n",
+		   hash.ToString().c_str(),
+		   bnt_hash.ToString().c_str());
         return error("CheckProofOfWork() : hash doesn't match nBits");
+    }
 
     return true;
 }
@@ -3295,11 +3307,16 @@ bool InitBlockIndex() {
 	const char* pszTimestamp = "@TheLittleDuke says it is better 2Give than 2Get";
 
         CTransaction txNew;
-        txNew.nTime = 1345083810;
+        txNew.nTime = 1460931698;
         txNew.vin.resize(1);
         txNew.vout.resize(1);
-        txNew.vin[0].scriptSig = CScript() << 486604799 << CBigNum(9999) << vector<unsigned char>((const unsigned char*)pszTimestamp, (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
+        txNew.vin[0].scriptSig = CScript() << 486604799 << CBigNum(9999) <<
+		vector<unsigned char>((const unsigned char*)pszTimestamp,
+				      (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
         txNew.vout[0].SetEmpty();
+
+	txNew.vin[0].scriptSig.PrintHex();
+	
         CBlock block;
         block.vtx.push_back(txNew);
         block.hashPrevBlock = 0;
@@ -3307,12 +3324,19 @@ bool InitBlockIndex() {
         block.nVersion = 1;
 	/* 2GiveCoin */
 	block.nTime    = 1460931698;
-        //block.nTime    = 1345084287;
-
         block.nBits    = bnProofOfWorkLimit.GetCompact();
 	/* 2GiveCoin */
 	block.nNonce   = 17189;
-        //block.nNonce   = 2179302059u;
+
+	 //// debug print
+        block.print();
+        printf("block.GetHash() == %s\n", block.GetHash().ToString().c_str());
+        printf("block.hashMerkleRoot == %s\n", block.hashMerkleRoot.ToString().c_str());
+        printf("block.nTime = %u \n", block.nTime);
+        printf("block.nNonce = %u \n", block.nNonce);
+        printf("block.nBits = 0x%x\n", block.nBits);
+
+        assert(block.hashMerkleRoot == uint256("0x6001ba1beeb9f9a815ca45583c5e66cc137c24b477ab3793ce394a706e454473"));
 
 
         if (fTestNet)
@@ -3342,8 +3366,8 @@ bool InitBlockIndex() {
 	/* 2GiveCoin */
         block.print();
 	assert(block.hashMerkleRoot == uint256("0x6001ba1beeb9f9a815ca45583c5e66cc137c24b477ab3793ce394a706e454473"));
-        assert(hash == hashGenesisBlock);
-        // ppcoin: check genesis block
+//        assert(hash == hashGenesisBlock);
+        // check genesis block
         {
             CValidationState state;
             assert(block.CheckBlock(state));
@@ -5248,6 +5272,9 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake, bool fGenerateSingleBloc
 void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
 #endif
 {
+
+    void *scratchbuf = scrypt_buffer_alloc();
+
     printf("CPUMiner started for proof-of-%s\n", fProofOfStake? "stake" : "work");
     SetThreadPriority(THREAD_PRIORITY_LOWEST);
     RenameThread(fProofOfStake? "ppcoin-stake-minter" : "ppcoin-miner");
@@ -5348,14 +5375,30 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
         uint256 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256();
         uint256 hashbuf[2];
         uint256& hash = *alignup<16>(hashbuf);
+
+        unsigned int max_nonce = 0xffff0000;
+        block_header res_header;
+        uint256 result;
+	
         loop
         {
             unsigned int nHashesDone = 0;
             unsigned int nNonceFound;
 
             // Crypto++ SHA256
+#if 0
             nNonceFound = ScanHash_CryptoPP(pmidstate, pdata + 64, phash1,
                                             (char*)&hash, nHashesDone);
+#endif
+
+	    nNonceFound = scanhash_scrypt(
+		    (block_header *)&pblock->nVersion,
+		    scratchbuf,
+		    max_nonce,
+		    nHashesDone,
+		    UBEGIN(result),
+		    &res_header );
+
 
             // Check if something found
             if (nNonceFound != (unsigned int) -1)
