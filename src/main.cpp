@@ -1134,8 +1134,6 @@ uint256 static GetOrphanRoot(const CBlockHeader* pblock)
 
 int64 GetProofOfWorkReward(unsigned int nBits)
 {
-
-	printf("%s 2GiveCoin does not use proof of work\n", __func__);
     CBigNum bnSubsidyLimit = MAX_MINT_PROOF_OF_WORK;
     CBigNum bnTarget;
     bnTarget.SetCompact(nBits);
@@ -3366,7 +3364,7 @@ bool InitBlockIndex() {
 	/* 2GiveCoin */
         block.print();
 	assert(block.hashMerkleRoot == uint256("0x6001ba1beeb9f9a815ca45583c5e66cc137c24b477ab3793ce394a706e454473"));
-//        assert(hash == hashGenesisBlock);
+        assert(hash == hashGenesisBlock);
         // check genesis block
         {
             CValidationState state;
