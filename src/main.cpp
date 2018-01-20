@@ -40,12 +40,9 @@ uint256 hashGenesisBlock = hashGenesisBlockOfficial;
 /* 2GiveCoin changes */
 static CBigNum bnProofOfWorkLimit(~uint256(0) >> 20);
 static CBigNum bnInitialHashTarget(~uint256(0) >> 20);
-//static CBigNum bnProofOfWorkLimit(~uint256(0) >> 32);
-//static CBigNum bnInitialHashTarget(~uint256(0) >> 40);
-
-//unsigned int nStakeMinAge = STAKE_MIN_AGE;
-unsigned int nStakeMinAge = 60 * 60 * 24 * 30;	// 30 day eligibilty for staking
 /* End */
+
+unsigned int nStakeMinAge = STAKE_MIN_AGE;
 int nCoinbaseMaturity = COINBASE_MATURITY_PPC;
 CBlockIndex* pindexGenesisBlock = NULL;
 int nBestHeight = -1;
@@ -1164,6 +1161,21 @@ int64 GetProofOfWorkReward(unsigned int nBits)
     return min(nSubsidy, MAX_MINT_PROOF_OF_WORK);
 }
 
+/* XXX */
+//const int YEARLY_BLOCKCOUNT = 262800;	// 365 * 720
+static const int64 MAX_MINT_PROOF_OF_STAKE = 0.05 * COIN;	// 5% annual interest
+int64 GetProofOfStakeReward(int64 nCoinAge)
+{
+    int64 nRewardCoinYear = MAX_MINT_PROOF_OF_STAKE;
+    int64 nSubsidy = nCoinAge * nRewardCoinYear / 365;
+
+    if (fDebug && GetBoolArg("-printcreation"))
+	    printf("GetProofOfStakeReward(): create=%s nCoinAge=%" PRI64d"\n",
+		   FormatMoney(nSubsidy).c_str(), nCoinAge);
+    return nSubsidy;
+}
+
+#if 0
 // ppcoin: miner's coin stake is rewarded based on coin age spent (coin-days)
 int64 GetProofOfStakeReward(int64 nCoinAge)
 {
@@ -1173,6 +1185,7 @@ int64 GetProofOfStakeReward(int64 nCoinAge)
         printf("GetProofOfStakeReward(): create=%s nCoinAge=%" PRI64d"\n", FormatMoney(nSubsidy).c_str(), nCoinAge);
     return nSubsidy;
 }
+#endif
 
 // Remove a random orphan block (which does not have any dependent orphans).
 void static PruneOrphanBlocks()
@@ -1200,8 +1213,9 @@ void static PruneOrphanBlocks()
 }
 
 
-static const int64 nTargetTimespan = 7 * 24 * 60 * 60;  // one week
-static const int64 nTargetSpacingWorkMax = 12 * STAKE_TARGET_SPACING; // 2-hour
+/* 2GiveCoin */
+static const int64 nTargetTimespan = 1 * 24 * 60 * 30;
+static const int64 nTargetSpacingWorkMax = 3 * STAKE_TARGET_SPACING; // 3 * 120 
 
 //
 // minimum amount of work that could possibly be required nTime after
@@ -2838,7 +2852,8 @@ bool CBlock::CheckBlockSignature() const
 unsigned int CBlock::GetStakeEntropyBit() const
 {
     unsigned int nEntropyBit = 0;
-    if (IsProtocolV04(nTime))
+    //if (IsProtocolV04(nTime))
+    if (true)
     {
         nEntropyBit = ((GetHash().Get64()) & 1llu);// last bit of block hash
         if (fDebug && GetBoolArg("-printstakemodifier"))

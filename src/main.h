@@ -37,15 +37,17 @@ class CCoinControl;
 struct CBlockIndexWorkComparator;
 
 /** The maximum allowed size for a serialized block, in bytes (network rule) */
-//static const unsigned int MAX_BLOCK_SIZE = 1000000;
 /* 2GiveCoin */
 static const unsigned int MAX_BLOCK_SIZE = 1500000;
 /** Obsolete: maximum size for mined blocks */
 static const unsigned int MAX_BLOCK_SIZE_GEN = MAX_BLOCK_SIZE/2;
 /** Default for -blockmaxsize, maximum size for mined blocks **/
-static const unsigned int DEFAULT_BLOCK_MAX_SIZE = 350000;
+/* 2GiveCoin */
+static const unsigned int DEFAULT_BLOCK_MAX_SIZE = 150000;
 /** Default for -blockprioritysize, maximum space for zero/low-fee transactions **/
-static const unsigned int DEFAULT_BLOCK_PRIORITY_SIZE = 30000;
+//static const unsigned int DEFAULT_BLOCK_PRIORITY_SIZE = 30000;
+/* 2GiveCoin */
+static const unsigned int DEFAULT_BLOCK_PRIORITY_SIZE = 27000;
 /** The maximum size for transactions we're willing to relay/mine */
 static const unsigned int MAX_STANDARD_TX_SIZE = 100000;
 /** The maximum allowed number of signature check operations in a block (network rule) */
@@ -70,18 +72,14 @@ static const unsigned int MEMPOOL_HEIGHT = 0x7FFFFFFF;
 //static const int64 MAX_MONEY = 2000000000 * COIN;
 static const int64 MAX_MONEY = 1000000000 * COIN;			// 1 billion
 inline bool MoneyRange(int64 nValue) { return (nValue >= 0 && nValue <= MAX_MONEY); }
-#if 0 /* peercoin defaults */
-static const int64 MIN_TX_FEE = CENT;
-static const int64 MIN_RELAY_TX_FEE = CENT;
-#else
 /* 2GiveCoin */
 static const int64 MIN_TX_FEE = 0;
 static const int64 MIN_RELAY_TX_FEE = 0;
-#endif
 static const int64 MAX_MINT_PROOF_OF_WORK = 9999 * COIN;
 static const int64 MIN_TXOUT_AMOUNT = MIN_TX_FEE;
 /** Coinbase transaction outputs can only be spent after this number of new blocks (network rule) */
-static const int COINBASE_MATURITY_PPC = 500;
+/* 2GiveCoin */
+static const int COINBASE_MATURITY_PPC = 10;
 /** Threshold for nLockTime: below this value it is interpreted as block number, otherwise as UNIX timestamp. */
 /* 2GiveCoin */
 static const int STAKE_TARGET_SPACING = 120;
