@@ -1262,6 +1262,15 @@ unsigned int static GetNextTargetRequired(const CBlockIndex* pindexLast, bool fP
         return bnInitialHashTarget.GetCompact(); // second block
 
     int64 nActualSpacing = pindexPrev->GetBlockTime() - pindexPrevPrev->GetBlockTime();
+#if 1
+    if (nActualSpacing < 0) {
+	    printf(">> nActualSpacing = %" PRI64d" corrected to 1.\n", nActualSpacing);
+	    nActualSpacing = 1;
+    } else if(nActualSpacing > nTargetTimespan) {
+	    printf(">> nActualSpacing = %" PRI64d" corrected to nTargetTimespan (900).\n", nActualSpacing);
+	    nActualSpacing = nTargetTimespan;
+    }
+#endif
 
     // ppcoin: target change every block
     // ppcoin: retarget with exponential moving toward target spacing
@@ -2427,11 +2436,14 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
     if (IsProofOfStake() && !CheckCoinStakeTimestamp(GetBlockTime(), (int64)vtx[1].nTime))
         return state.DoS(50, error("CheckBlock() : coinstake timestamp violation nTimeBlock=%" PRI64u" nTimeTx=%u", GetBlockTime(), vtx[1].nTime));
 
+#if 0
+    /* Do we care about this can we leave it disabled? RMC */
     // Check coinbase reward
     if (vtx[0].GetValueOut() > (IsProofOfWork()? (GetProofOfWorkReward(nBits) - vtx[0].GetMinFee() + MIN_TX_FEE) : 0))
         return state.DoS(50, error("CheckBlock() : coinbase reward exceeded %s > %s", 
                    FormatMoney(vtx[0].GetValueOut()).c_str(),
                    FormatMoney(IsProofOfWork()? GetProofOfWorkReward(nBits) : 0).c_str()));
+#endif
 
     // Check transactions
     BOOST_FOREACH(const CTransaction& tx, vtx)
