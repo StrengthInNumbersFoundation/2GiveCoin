@@ -1257,6 +1257,14 @@ unsigned int static GetNextTargetRequired(const CBlockIndex* pindexLast, bool fP
     int64 nInterval = nTargetTimespan / nTargetSpacing;
     bnNew *= ((nInterval - 1) * nTargetSpacing + nActualSpacing + nActualSpacing);
     bnNew /= ((nInterval + 1) * nTargetSpacing);
+	
+#if 0
+    /* 2GiveCoin Debug */
+    printf(">> Height = %d, fProofOfStake = %d, nInterval = %" PRI64d", nTargetSpacing = %" PRI64d", nActualSpacing = %" PRI64d"\n" 
+	   ">> pindexPrev->GetBlockTime() = %" PRI64d", pindexPrev->nHeight = %d, pindexPrevPrev->GetBlockTime() = %" PRI64d", pindexPrevPrev->nHeight = %d\n",
+	   pindexPrev->nHeight, fProofOfStake, nInterval, nTargetSpacing, nActualSpacing,
+	   pindexPrev->GetBlockTime(), pindexPrev->nHeight, pindexPrevPrev->GetBlockTime(), pindexPrevPrev->nHeight,
+#endif
 
     if (bnNew > bnProofOfWorkLimit)
         bnNew = bnProofOfWorkLimit;
@@ -2473,8 +2481,12 @@ bool CBlock::AcceptBlock(CValidationState &state, CDiskBlockPos *dbp)
         nHeight = pindexPrev->nHeight+1;
 
         // Check proof-of-work or proof-of-stake
-        if (nBits != GetNextTargetRequired(pindexPrev, IsProofOfStake()))
+	unsigned int mybits = GetNextTargetRequired(pindexPrev, IsProofOfStake());
+	if (nBits != mybits) {
+            printf("%s: nBits=%08x mybits=%08x ", __func__, nBits, mybits);
+	    printf("POW %s bits=%08x\n", bnProofOfWorkLimit.ToString().c_str(), bnProofOfWorkLimit.GetCompact());
             return state.DoS(100, error("AcceptBlock() : incorrect proof-of-work/proof-of-stake"));
+	}
 
         // Check timestamp against prev
         if (GetBlockTime() <= pindexPrev->GetMedianTimePast() || GetBlockTime() + nMaxClockDrift < pindexPrev->GetBlockTime())
@@ -4029,7 +4041,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             pfrom->AddInventoryKnown(inv);
 
             bool fAlreadyHave = AlreadyHave(inv);
-            if (fDebug)
+            if (fDebug && 0)
                 printf("  got inventory: %s  %s\n", inv.ToString().c_str(), fAlreadyHave ? "have" : "new");
 
             if (!fAlreadyHave) {

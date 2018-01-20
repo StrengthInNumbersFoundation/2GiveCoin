@@ -343,23 +343,50 @@ static bool GetKernelStakeModifierV05(unsigned int nTimeTx, uint64& nStakeModifi
 static bool GetKernelStakeModifierV03(uint256 hashBlockFrom, uint64& nStakeModifier, int& nStakeModifierHeight, int64& nStakeModifierTime, bool fPrintProofOfStake)
 {
     nStakeModifier = 0;
+
+#if 0
+    printf("%s (hasBlockFrom, nStakeModifier, nStakeModifierTime, fPrintProofOfStake = %d\n", __func__, fPrintProofOfStake);
+#endif
+
     if (!mapBlockIndex.count(hashBlockFrom))
         return error("GetKernelStakeModifier() : block not indexed");
+
     const CBlockIndex* pindexFrom = mapBlockIndex[hashBlockFrom];
     nStakeModifierHeight = pindexFrom->nHeight;
     nStakeModifierTime = pindexFrom->GetBlockTime();
     int64 nStakeModifierSelectionInterval = GetStakeModifierSelectionInterval();
     const CBlockIndex* pindex = pindexFrom;
+
+#if 0
+    printf("\tnStakeModifierTime=%" PRI64d", pindexFrom->GetBlockTime() = %" PRI64d", nStakeModifierSelectionInterval = %" PRI64d"\n",
+	   nStakeModifierTime, pindexFrom->GetBlockTime(), nStakeModifierSelectionInterval);
+#endif
+
+
     // loop to find the stake modifier later by a selection interval
     while (nStakeModifierTime < pindexFrom->GetBlockTime() + nStakeModifierSelectionInterval)
     {
+#if 0
+	    printf("\t %" PRI64d" < %" PRI64d" (nStakeModifierTime < pindexFrom->GetBlockTime() + nStakeModifierSelectionInterval)\n",
+		   nStakeModifierTime, pindexFrom->GetBlockTime() + nStakeModifierSelectionInterval);
+#endif
         if (!pindex->pnext)
         {   // reached best block; may happen if node is behind on block chain
-            if (fPrintProofOfStake || (pindex->GetBlockTime() + nStakeMinAge - nStakeModifierSelectionInterval > GetAdjustedTime()))
+            if (fPrintProofOfStake || (pindex->GetBlockTime() + nStakeMinAge - nStakeModifierSelectionInterval > GetAdjustedTime())) {
+#if 0
+                printf("\treached best block %s at height %d from block %s\n", pindex->GetBlockHash().ToString().c_str(), pindex->nHeight, hashBlockFrom.ToString().c_str());
+#endif
                 return error("GetKernelStakeModifier() : reached best block %s at height %d from block %s",
                     pindex->GetBlockHash().ToString().c_str(), pindex->nHeight, hashBlockFrom.ToString().c_str());
+            }
             else
-                return false;
+	    {
+#if 0
+		    printf(">> nStakeModifierTime = %" PRI64d", pindexFrom->GetBlockTime() = %" PRI64d", nStakeModifierSelectionInterval = %" PRI64d"\n",
+			   nStakeModifierTime, pindexFrom->GetBlockTime(), nStakeModifierSelectionInterval);
+#endif
+		    return false;
+	    }
         }
         pindex = pindex->pnext;
         if (pindex->GeneratedStakeModifier())
@@ -431,8 +458,10 @@ bool CheckStakeKernelHash(unsigned int nBits, const CBlockHeader& blockFrom, uns
     int64 nStakeModifierTime = 0;
     if (IsProtocolV03(nTimeTx))  // v0.3 protocol
     {
-        if (!GetKernelStakeModifier(blockFrom.GetHash(), nTimeTx, nStakeModifier, nStakeModifierHeight, nStakeModifierTime, fPrintProofOfStake))
-            return false;
+	    if (!GetKernelStakeModifier(blockFrom.GetHash(), nTimeTx, nStakeModifier, nStakeModifierHeight, nStakeModifierTime, fPrintProofOfStake)) {
+		    printf("%s XXXXX return false\n", __func__);
+		    return false;
+	    }
         ss << nStakeModifier;
     }
     else // v0.2 protocol
@@ -458,8 +487,14 @@ bool CheckStakeKernelHash(unsigned int nBits, const CBlockHeader& blockFrom, uns
     }
 
     // Now check if proof-of-stake hash meets target protocol
-    if (CBigNum(hashProofOfStake) > bnCoinDayWeight * bnTargetPerCoinDay)
-        return false;
+    if (CBigNum(hashProofOfStake) > bnCoinDayWeight * bnTargetPerCoinDay) {
+	    printf(">>> bnCoinDayWeight = %s, bnTargetPerCoinDay=%s hashProof=%s\n"
+		   ">>> CheckStakeKernelHash - hashProofOfStake too much\n",
+		   bnCoinDayWeight.ToString().c_str(), bnTargetPerCoinDay.ToString().c_str(),
+		   hashProofOfStake.ToString().c_str());
+	    return false;
+    }
+    
     if (fDebug && !fPrintProofOfStake)
     {
         if (IsProtocolV03(nTimeTx))

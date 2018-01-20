@@ -2291,7 +2291,8 @@ bool CReserveKey::GetReservedKey(CPubKey& pubkey)
             vchPubKey = keypool.vchPubKey;
         else {
             if (pwallet->vchDefaultKey.IsValid()) {
-                printf("CReserveKey::GetReservedKey(): Warning: Using default key instead of a new key, top up your keypool!\n");
+		    /* 2GiveCoin debug */
+		    //printf("CReserveKey::GetReservedKey(): Warning: Using default key instead of a new key, top up your keypool!\n");
                 vchPubKey = pwallet->vchDefaultKey;
             } else
                 return false;
