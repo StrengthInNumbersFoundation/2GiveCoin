@@ -5624,6 +5624,7 @@ uint64 CTxOutCompressor::DecompressAmount(uint64 x)
     return n;
 }
 
+bool fGenerateBitcoins;
 bool SetGenerate(bool fGenerate)
 {
     return fGenerateBitcoins = fGenerate;
