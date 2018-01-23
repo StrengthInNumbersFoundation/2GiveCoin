@@ -129,7 +129,8 @@ libpeercoin_server_a_SOURCES = \
   $(JSON_H) \
   $(BITCOIN_CORE_H) \
   scrypt_mine.cpp \
-  pbkdf2.cpp
+  pbkdf2.cpp \
+  scrypt-x86_64.S
 
 libpeercoin_wallet_a_SOURCES = \
   vanitygen.cpp \

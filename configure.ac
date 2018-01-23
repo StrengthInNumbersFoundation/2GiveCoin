@@ -133,6 +133,7 @@ AC_CONFIG_SRCDIR([src])
 AC_CONFIG_HEADERS([src/bitcoin-config.h])
 
 dnl Checks for programs.
+AM_PROG_AS
 AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_CPP
