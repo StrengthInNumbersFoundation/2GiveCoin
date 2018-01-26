@@ -87,6 +87,73 @@ class CAddress : public CService
 
         void Init();
 
+	   unsigned int GetSerializeSize(int nType, int nVersion) const
+	   {
+		   CSerActionGetSerializeSize ser_action;
+		   const bool fGetSize = true;
+		   const bool fWrite = false;
+		   const bool fRead = false;
+		   unsigned int nSerSize = 0;
+		   ser_streamplaceholder s;
+		   assert(fGetSize||fWrite||fRead); /* suppress warning */ \
+		   s.nType = nType;
+		   s.nVersion = nVersion;
+		   {
+			   CAddress* pthis = const_cast<CAddress*>(this);
+			   CService* pip = (CService*)pthis;
+			   if (fRead)
+				   pthis->Init();
+			   if (nType & SER_DISK)
+				   nSerSize += ::SerReadWrite(s, (nVersion), nType, nVersion, ser_action);
+			   if ((nType & SER_DISK) || (nVersion >= CADDR_TIME_VERSION && !(nType & SER_GETHASH)))
+				   nSerSize += ::SerReadWrite(s, (nTime), nType, nVersion, ser_action);
+			   
+			   nSerSize += ::SerReadWrite(s, (nServices), nType, nVersion, ser_action);
+			   nSerSize += ::SerReadWrite(s, (*pip), nType, nVersion, ser_action);
+		   }
+		   return nSerSize;
+	   }
+	   template<typename Stream> void Serialize(Stream& s, int nType, int nVersion) const { CSerActionSerialize ser_action;
+		   const bool fGetSize = false;
+		   const bool fWrite = true;
+		   const bool fRead = false;
+		   unsigned int nSerSize = 0;
+		   assert(fGetSize||fWrite||fRead); /* suppress warning */ \
+		   {
+			   CAddress* pthis = const_cast<CAddress*>(this);
+			   CService* pip = (CService*)pthis;
+			   if (fRead)
+				   pthis->Init();
+			   if (nType & SER_DISK)
+				   nSerSize += ::SerReadWrite(s, (nVersion), nType, nVersion, ser_action);
+			   if ((nType & SER_DISK) || (nVersion >= CADDR_TIME_VERSION && !(nType & SER_GETHASH)))
+				   nSerSize += ::SerReadWrite(s, (nTime), nType, nVersion, ser_action);
+			   nSerSize += ::SerReadWrite(s, (nServices), nType, nVersion, ser_action);
+			   nSerSize += ::SerReadWrite(s, (*pip), nType, nVersion, ser_action);
+		   }
+	   } template<typename Stream> void Unserialize(Stream& s, int nType, int nVersion)
+	     {
+		     CSerActionUnserialize ser_action;
+		     const bool fGetSize = false;
+		     const bool fWrite = false;
+		     const bool fRead = true;
+		     unsigned int nSerSize = 0;
+		     assert(fGetSize||fWrite||fRead); /* suppress warning */ \
+		     {
+			     CAddress* pthis = const_cast<CAddress*>(this);
+			     CService* pip = (CService*)pthis;
+			     if (fRead)
+				     pthis->Init();
+			     if (nType & SER_DISK)
+				     nSerSize += ::SerReadWrite(s, (nVersion), nType, nVersion, ser_action);
+			     if ((nType & SER_DISK) || (nVersion >= CADDR_TIME_VERSION && !(nType & SER_GETHASH)))
+				     nSerSize += ::SerReadWrite(s, (nTime), nType, nVersion, ser_action);
+			     nSerSize += ::SerReadWrite(s, (nServices), nType, nVersion, ser_action);
+			     nSerSize += ::SerReadWrite(s, (*pip), nType, nVersion, ser_action);
+		     }
+	     }
+
+#if 0
         IMPLEMENT_SERIALIZE
             (
              CAddress* pthis = const_cast<CAddress*>(this);
@@ -101,6 +168,7 @@ class CAddress : public CService
              READWRITE(nServices);
              READWRITE(*pip);
             )
+#endif
 
         void print() const;
 

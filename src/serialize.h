@@ -830,6 +830,10 @@ public:
         Init(nTypeIn, nVersionIn);
     }
 
+    unsigned int getReadPos() {
+	    return nReadPos;
+    }
+
     CDataStream(const_iterator pbegin, const_iterator pend, int nTypeIn, int nVersionIn) : vch(pbegin, pend)
     {
         Init(nTypeIn, nVersionIn);

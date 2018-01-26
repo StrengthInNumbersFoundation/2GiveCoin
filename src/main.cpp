@@ -3848,6 +3848,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         if (pfrom->nVersion != 0)
         {
             pfrom->Misbehaving(1);
+	    printf("%s:%d return false\n", __func__, __LINE__);
             return false;
         }
 
@@ -3855,7 +3856,14 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         CAddress addrMe;
         CAddress addrFrom;
         uint64 nNonce = 1;
-        vRecv >> pfrom->nVersion >> pfrom->nServices >> nTime >> addrMe;
+        vRecv >> pfrom->nVersion >> pfrom->nServices >> nTime;
+
+	printf("%s:%d pos %u version %u services %llu\n", __func__, __LINE__, vRecv.getReadPos(),
+	       pfrom->nVersion, pfrom->nServices);
+
+	vRecv >> addrMe;
+	printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
+	
         if (pfrom->nVersion < MIN_PROTO_VERSION)
         {
             // Since February 20, 2012, the protocol is initiated at version 209,
@@ -3865,26 +3873,42 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return false;
         }
 
+	printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
         if (pfrom->nVersion == 10300)
             pfrom->nVersion = 300;
+	
         if (!vRecv.empty())
-            vRecv >> addrFrom >> nNonce;
+		vRecv >> addrFrom;
+	printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
+	
+        if (!vRecv.empty())
+		vRecv >> nNonce;
+	printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
+	
         if (!vRecv.empty()) {
             vRecv >> pfrom->strSubVer;
             pfrom->cleanSubVer = SanitizeString(pfrom->strSubVer);
         }
+	printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
+	
         if (!vRecv.empty())
             vRecv >> pfrom->nStartingHeight;
-        if (!vRecv.empty())
+	printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
+	
+        if (!vRecv.empty()) {
             vRecv >> pfrom->fRelayTxes; // set to true after we get the first filter* message
-        else
+	    printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
+	} else
             pfrom->fRelayTxes = true;
+	
+	printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
 
         if (pfrom->fInbound && addrMe.IsRoutable())
         {
             pfrom->addrLocal = addrMe;
             SeenLocal(addrMe);
         }
+	printf("%s:%d\n", __func__, __LINE__);
 
         // Disconnect if we connected to ourself
         if (nNonce == nLocalHostNonce && nNonce > 1)
@@ -4176,7 +4200,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         // we must use CBlocks, as CBlockHeaders won't include the 0x00 nTx count at the end
         vector<CBlock> vHeaders;
         int nLimit = 2000;
-        printf("getheaders %d to %s\n", (pindex ? pindex->nHeight : -1), hashStop.ToString().substr(0,20).c_str());
+        printf("getheaders %d to %s\n", (pindex ? pindex->nHeight : -1), hashStop.ToString().c_str());
         for (; pindex; pindex = pindex->pnext)
         {
             vHeaders.push_back(pindex->GetBlockHeader());
@@ -4451,8 +4475,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 // requires LOCK(cs_vRecvMsg)
 bool ProcessMessages(CNode* pfrom)
 {
-    //if (fDebug)
-    //    printf("ProcessMessages(%zu messages)\n", pfrom->vRecvMsg.size());
+	if (fDebug && pfrom->vRecvMsg.size())
+	    printf("ProcessMessages(%zu messages)\n", pfrom->vRecvMsg.size());
 
     //
     // Message format
@@ -4489,10 +4513,10 @@ bool ProcessMessages(CNode* pfrom)
         // get next message
         CNetMessage& msg = *it;
 
-        //if (fDebug)
-        //    printf("ProcessMessages(message %u msgsz, %zu bytes, complete:%s)\n",
-        //            msg.hdr.nMessageSize, msg.vRecv.size(),
-        //            msg.complete() ? "Y" : "N");
+        if (fDebug)
+		printf("ProcessMessages(message %u msgsz, %zu bytes, complete:%s)\n",
+		       msg.hdr.nMessageSize, msg.vRecv.size(),
+		       msg.complete() ? "Y" : "N");
 
         // end, if an incomplete message is found
         if (!msg.complete())
@@ -4503,7 +4527,7 @@ bool ProcessMessages(CNode* pfrom)
 
         // Scan for message start
         if (memcmp(msg.hdr.pchMessageStart, pchMessageStart, sizeof(pchMessageStart)) != 0) {
-            printf("\n\nPROCESSMESSAGE: INVALID MESSAGESTART\n\n");
+            printf("\n\nPROCESSMESSAGE: INVALID MESSAGESTART aka MAGIC\n\n");
             fOk = false;
             break;
         }
