@@ -3858,11 +3858,10 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         uint64 nNonce = 1;
         vRecv >> pfrom->nVersion >> pfrom->nServices >> nTime;
 
-	printf("%s:%d pos %u version %u services %llu\n", __func__, __LINE__, vRecv.getReadPos(),
-	       pfrom->nVersion, pfrom->nServices);
+	//printf("%s:%d pos %u version %u services %llu\n", __func__, __LINE__, vRecv.getReadPos(), pfrom->nVersion, pfrom->nServices);
 
 	vRecv >> addrMe;
-	printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
+	//printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
 	
         if (pfrom->nVersion < MIN_PROTO_VERSION)
         {
@@ -3873,42 +3872,42 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return false;
         }
 
-	printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
+	//printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
         if (pfrom->nVersion == 10300)
             pfrom->nVersion = 300;
 	
         if (!vRecv.empty())
 		vRecv >> addrFrom;
-	printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
+	//printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
 	
         if (!vRecv.empty())
 		vRecv >> nNonce;
-	printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
+	//printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
 	
         if (!vRecv.empty()) {
             vRecv >> pfrom->strSubVer;
             pfrom->cleanSubVer = SanitizeString(pfrom->strSubVer);
         }
-	printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
+	//printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
 	
         if (!vRecv.empty())
             vRecv >> pfrom->nStartingHeight;
-	printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
+	//printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
 	
         if (!vRecv.empty()) {
             vRecv >> pfrom->fRelayTxes; // set to true after we get the first filter* message
-	    printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
+	    //printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
 	} else
             pfrom->fRelayTxes = true;
 	
-	printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
+	//printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
 
         if (pfrom->fInbound && addrMe.IsRoutable())
         {
             pfrom->addrLocal = addrMe;
             SeenLocal(addrMe);
         }
-	printf("%s:%d\n", __func__, __LINE__);
+	//printf("%s:%d\n", __func__, __LINE__);
 
         // Disconnect if we connected to ourself
         if (nNonce == nLocalHostNonce && nNonce > 1)
@@ -4166,7 +4165,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             {
                 // When this block is requested, we'll send an inv that'll make them
                 // getblocks the next batch of inventory.
-                printf("  getblocks stopping at limit %d %s\n", pindex->nHeight, pindex->GetBlockHash().ToString().substr(0,20).c_str());
+                printf("  getblocks stopping at limit %d %s\n", pindex->nHeight, pindex->GetBlockHash().ToString().c_str());
                 pfrom->hashContinue = pindex->GetBlockHash();
                 break;
             }
@@ -4179,6 +4178,11 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         CBlockLocator locator;
         uint256 hashStop;
         vRecv >> locator >> hashStop;
+
+	printf("%s:%d hashStop %s height %d\n", __func__, __LINE__,
+	       hashStop.ToString().c_str(),
+	       locator.GetHeight()
+		);
 
         CBlockIndex* pindex = NULL;
         if (locator.IsNull())
