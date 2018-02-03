@@ -2604,10 +2604,12 @@ void CleanUpOldDuplicateStakeBlocks()
     uint64 maxAge = 24 * 60 * 60;
     uint64 minTime = GetAdjustedTime() - maxAge;
 
+    printf("%s size %lu\n", __func__, mapDuplicateStakeBlocks.size());
     BOOST_FOREACH(PAIRTYPE(const uint256, CBlock*)& item, mapDuplicateStakeBlocks)
     {
         const uint256& hash = item.first;
         CBlock* block = item.second;
+	printf("%s:%d\n", __func__, __LINE__);
         if (block->GetBlockTime() < minTime)
         {
             mapDuplicateStakeBlocks.erase(hash);
