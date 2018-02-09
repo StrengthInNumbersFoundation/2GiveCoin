@@ -1305,7 +1305,11 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
                 wtxNew.vout.clear();
                 wtxNew.fFromMe = true;
 
-                int64 nTotalValue = nValue + nFeeRet;
+                nCharityRet = (GetBalance() - nValue - nFeeRet) * 0.01;
+		nCharityRet = (nCharityRet > 0 ? nCharityRet : 0);
+		nFeeRet += nValue * 0.01;
+		
+                int64 nTotalValue = nValue + nFeeRet + nCharityRet;
                 double dPriority = 0;
                 // vouts to the payees
                 BOOST_FOREACH (const PAIRTYPE(CScript, int64)& s, vecSend)
