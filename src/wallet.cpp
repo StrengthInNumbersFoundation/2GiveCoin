@@ -1291,7 +1291,7 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
         return false;
     }
 
-printf("wtxNew.BindWallet(this)\n");
+    printf("wtxNew.BindWallet(this)\n");
 
     wtxNew.BindWallet(this);
 
@@ -1338,7 +1338,7 @@ printf("wtxNew.BindWallet(this)\n");
                     wtxNew.vout.push_back(CTxOut(s.second, s.first));
 
 #endif
-printf("Choose coins to use\n");
+		printf("Choose coins to use\n");
                 // Choose coins to use
                 set<pair<const CWalletTx*,unsigned int> > setCoins;
                 int64 nValueIn = 0;

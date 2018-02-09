@@ -34,7 +34,10 @@ bool CCoinsViewDB::SetCoins(const uint256 &txid, const CCoins &coins) {
 }
 
 bool CCoinsViewDB::HaveCoins(const uint256 &txid) {
-    return db.Exists(make_pair('c', txid)); 
+	bool ret = db.Exists(make_pair('c', txid));
+	//txid.print();
+	printf("%s txid %s ret %d\n", __func__, txid.ToString().c_str(), ret);
+	return ret;
 }
 
 CBlockIndex *CCoinsViewDB::GetBestBlock() {

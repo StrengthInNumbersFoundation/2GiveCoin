@@ -736,6 +736,7 @@ bool CTxMemPool::accept(CValidationState &state, CTransaction &tx, bool fCheckIn
 
     // is it already in the memory pool?
     uint256 hash = tx.GetHash();
+    printf("%s hash %s\n", __func__, hash.ToString().c_str());
     {
         LOCK(cs);
         if (mapTx.count(hash))
@@ -789,6 +790,8 @@ bool CTxMemPool::accept(CValidationState &state, CTransaction &tx, bool fCheckIn
         // only helps filling in pfMissingInputs (to determine missing vs spent).
         BOOST_FOREACH(const CTxIn txin, tx.vin) {
             if (!view.HaveCoins(txin.prevout.hash)) {
+		    printf("%s DRAT prevout.hash %s\n", __func__, txin.prevout.hash.ToString().c_str());
+		    txin.print();
                 if (pfMissingInputs)
                     *pfMissingInputs = true;
                 return false;
@@ -3729,6 +3732,7 @@ void static ProcessGetData(CNode* pfrom)
 
             if (inv.type == MSG_BLOCK || inv.type == MSG_FILTERED_BLOCK)
             {
+		    //printf("%s:%d inv.type == MSG_BLOCK or FILTERED_BLOCK %d\n", __func__, __LINE__, inv.type);
                 // Send block from disk
                 map<uint256, CBlockIndex*>::iterator mi = mapBlockIndex.find(inv.hash);
                 if (mi != mapBlockIndex.end())
@@ -3753,8 +3757,10 @@ void static ProcessGetData(CNode* pfrom)
                             // however we MUST always provide at least what the remote peer needs
                             typedef std::pair<unsigned int, uint256> PairType;
                             BOOST_FOREACH(PairType& pair, merkleBlock.vMatchedTxn)
-                                if (!pfrom->setInventoryKnown.count(CInv(MSG_TX, pair.second)))
-                                    pfrom->PushMessage("tx", block.vtx[pair.first]);
+				    if (!pfrom->setInventoryKnown.count(CInv(MSG_TX, pair.second))) {
+					    printf("%s:%d calling PushMessage(tx)\n", __func__, __LINE__);
+					    pfrom->PushMessage("tx", block.vtx[pair.first]);
+				    }
                         }
                         // else
                             // no response
@@ -3790,6 +3796,7 @@ void static ProcessGetData(CNode* pfrom)
                     }
                 }
                 if (!pushed && inv.type == MSG_TX) {
+			printf("%s:%d inv.type == MSG_TX\n", __func__, __LINE__);
                     LOCK(mempool.cs);
                     if (mempool.exists(inv.hash)) {
                         CTransaction tx = mempool.lookup(inv.hash);
@@ -4337,6 +4344,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         vector<CInv> vInv;
         BOOST_FOREACH(uint256& hash, vtxid) {
             CInv inv(MSG_TX, hash);
+	    printf("%s hash %s\n", __func__, hash.ToString().c_str());
             if ((pfrom->pfilter && pfrom->pfilter->IsRelevantAndUpdate(mempool.lookup(hash), hash)) ||
                (!pfrom->pfilter))
                 vInv.push_back(inv);
@@ -5055,16 +5063,20 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, CWallet* pwallet, bool f
                 }
                 const CCoins &coins = view.GetCoins(txin.prevout.hash);
 
+#if  1
                 if (txin.prevout.n >= coins.vout.size())
                 {
                     // This should never happen unless the memory pool is invalid
-                    printf("ERROR: mempool transaction invalid input %s:%d\n", txin.prevout.hash.ToString().c_str(), txin.prevout.n);
-                    if (fDebug) assert("mempool transaction invalid input" == 0);
+			printf("ERROR: mempool transaction invalid input %s:%d txin.prevout.n %d coins.vout.size %lu\n",
+			       txin.prevout.hash.ToString().c_str(), txin.prevout.n,
+			       txin.prevout.n, coins.vout.size());
+                    //if (fDebug) assert("mempool transaction invalid input" == 0);
                     fMissingInputs = true;
                     if (porphan)
                         vOrphan.pop_back();
                     break;
                 }
+#endif
 
                 int64 nValueIn = coins.vout[txin.prevout.n].nValue;
                 nTotalIn += nValueIn;
