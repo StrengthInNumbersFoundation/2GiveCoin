@@ -116,7 +116,11 @@ QT_MOC_CPP = \
   qt/moc_walletview.cpp \
   qt/moc_walletstack.cpp \
   qt/moc_rpcconsole.cpp \
-  qt/moc_overviewpage.cpp
+  qt/moc_overviewpage.cpp \
+  qt/moc_giftcardpage.cpp \
+  qt/moc_giftcardtablemodel.cpp \
+  qt/moc_giftcarddatamanager.cpp \
+  qt/moc_contacttablemodel.cpp
 
 PEERCOIN_MM = \
   qt/macdockiconhandler.mm \
@@ -331,7 +335,7 @@ if ENABLE_WALLET
 qt_peercoin_qt_LDADD += $(LIBPEERCOIN_WALLET) 
 endif
 qt_peercoin_qt_LDADD += $(LIBPEERCOIN_CLI) $(LIBPEERCOIN_COMMON) $(LIBLEVELDB) $(LIBMEMENV) \
-  $(BOOST_LIBS) $(QT_LIBS) $(QT_DBUS_LIBS) $(QR_LIBS) $(BDB_LIBS)
+  $(BOOST_LIBS) $(QT_LIBS) $(QT_DBUS_LIBS) $(QR_LIBS) $(BDB_LIBS) -lcurl
 qt_peercoin_qt_LDFLAGS = $(AM_LDFLAGS) $(QT_LDFLAGS)
 
 #locale/foo.ts -> locale/foo.qm
