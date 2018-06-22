@@ -93,8 +93,9 @@ static const int fHaveUPnP = true;
 static const int fHaveUPnP = false;
 #endif
 
+/* 2GiveCoin TetNet Genesis Block */
+static const uint256 hashGenesisBlockTestNet ("0x000000048f1bc5180568b72953da1763bc4808c55bf3e1212a87b35c7ae7764f");
 /* 2GiveCoin Genesis Block */
-static const uint256 hashGenesisBlockTestNet ("0x00000a055a8a21ab15d2c24bf5769100e7e3d3e4134fb8a6a7e879f13a91c974");
 static const uint256 hashGenesisBlockOfficial("0x00000a055a8a21ab15d2c24bf5769100e7e3d3e4134fb8a6a7e879f13a91c974");
 
 static const int64 nMaxClockDrift = 2 * 60 * 60;        // two hours

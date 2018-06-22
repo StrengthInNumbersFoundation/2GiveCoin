@@ -36,7 +36,7 @@ unsigned int nTransactionsUpdated = 0;
 
 map<uint256, CBlockIndex*> mapBlockIndex;
 set<pair<COutPoint, unsigned int> > setStakeSeen;
-uint256 hashGenesisBlock = hashGenesisBlockOfficial;
+uint256 hashGenesisBlock;
 /* 2GiveCoin changes */
 static CBigNum bnProofOfWorkLimit(~uint256(0) >> 20);
 static CBigNum bnInitialHashTarget(~uint256(0) >> 20);
@@ -2412,8 +2412,10 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
         return state.DoS(50, error("CheckBlock() : proof of work failed"));
 
     // Check timestamp
-    if (GetBlockTime() > GetAdjustedTime() + nMaxClockDrift)
+    if (GetBlockTime() > GetAdjustedTime() + nMaxClockDrift) {
+	    printf("Block Time %lld AdjustedTime %lld\n", GetBlockTime(), GetAdjustedTime());
         return state.Invalid(error("CheckBlock() : block timestamp too far in the future"));
+    }
 
     // First transaction must be coinbase, the rest must not be
     if (vtx.empty() || !vtx[0].IsCoinBase())
@@ -3343,13 +3345,26 @@ bool InitBlockIndex() {
         //   vMerkleTree: 4a5e1e
 
         // Genesis block
-#if 0
-        const char* pszTimestamp = "Matonis 07-AUG-2012 Parallel Currencies And The Roadmap To Monetary Freedom";
-#endif
-	const char* pszTimestamp = "@TheLittleDuke says it is better 2Give than 2Get";
+	const char* pszTimestampOfficial = "@TheLittleDuke says it is better 2Give than 2Get";
+	const char* pszTimestampTestNet = "DaElf 01-Jun-2018 says it is better 2Give than 2Get";
+	const char* pszTimestamp;
 
         CTransaction txNew;
-        txNew.nTime = 1460931698;
+        CBlock block;
+	
+	if (fTestNet) {
+		block.nTime    = 1529296479;
+		block.nNonce   = 672018133;
+		pszTimestamp   = pszTimestampTestNet;
+		hashGenesisBlock = hashGenesisBlockTestNet;
+        } else {
+		block.nTime    = 1460931698;
+		block.nNonce   = 17189;
+		pszTimestamp   = pszTimestampOfficial;
+		hashGenesisBlock = hashGenesisBlockOfficial;
+	}
+
+        txNew.nTime = block.nTime;
         txNew.vin.resize(1);
         txNew.vout.resize(1);
         txNew.vin[0].scriptSig = CScript() << 486604799 << CBigNum(9999) <<
@@ -3359,36 +3374,29 @@ bool InitBlockIndex() {
 
 	txNew.vin[0].scriptSig.PrintHex();
 	
-        CBlock block;
         block.vtx.push_back(txNew);
         block.hashPrevBlock = 0;
         block.hashMerkleRoot = block.BuildMerkleTree();
         block.nVersion = 1;
-	/* 2GiveCoin */
-	block.nTime    = 1460931698;
         block.nBits    = bnProofOfWorkLimit.GetCompact();
-	/* 2GiveCoin */
-	block.nNonce   = 17189;
 
 	 //// debug print
-        block.print();
+	printf("pszTimesteamp %s length %zu\n", pszTimestamp, strlen(pszTimestamp));
         printf("block.GetHash() == %s\n", block.GetHash().ToString().c_str());
         printf("block.hashMerkleRoot == %s\n", block.hashMerkleRoot.ToString().c_str());
         printf("block.nTime = %u \n", block.nTime);
         printf("block.nNonce = %u \n", block.nNonce);
         printf("block.nBits = 0x%x\n", block.nBits);
+        block.print();
 
-        assert(block.hashMerkleRoot == uint256("0x6001ba1beeb9f9a815ca45583c5e66cc137c24b477ab3793ce394a706e454473"));
+//        assert(block.hashMerkleRoot == uint256("0x6001ba1beeb9f9a815ca45583c5e66cc137c24b477ab3793ce394a706e454473"));
 
 
-        if (fTestNet)
-        {
-            block.nTime    = 1345090000;
-            block.nNonce   = 122894938;
-        }
-
-#ifdef TESTING
+//#ifdef TESTING
+#if 0
         CBigNum bnTarget;
+#pragma omp parallel for
+	block.nNonce = 314572800;
         bnTarget.SetCompact(block.nBits);
         while (block.GetHash() > bnTarget.getuint256())
         {
