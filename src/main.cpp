@@ -3415,7 +3415,7 @@ bool InitBlockIndex() {
         //assert(block.hashMerkleRoot == uint256("0x3c2d8f85fab4d17aac558cc648a1a58acff0de6deb890c29985690052c5993c2"));
 	/* 2GiveCoin */
         block.print();
-	assert(block.hashMerkleRoot == uint256("0x6001ba1beeb9f9a815ca45583c5e66cc137c24b477ab3793ce394a706e454473"));
+	//assert(block.hashMerkleRoot == uint256("0x6001ba1beeb9f9a815ca45583c5e66cc137c24b477ab3793ce394a706e454473"));
         assert(hash == hashGenesisBlock);
         // check genesis block
         {
