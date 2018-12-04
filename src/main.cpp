@@ -5465,7 +5465,7 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
 
         unsigned int max_nonce = 0xffff0000;
         block_header res_header;
-        uint256 result;
+//        uint256 result;
 	
         loop
         {
@@ -5483,7 +5483,7 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
 		    scratchbuf,
 		    max_nonce,
 		    nHashesDone,
-		    UBEGIN(result),
+		    UBEGIN(hash),
 		    &res_header );
 
 
@@ -5497,6 +5497,8 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
                 {
                     // Found a solution
                     pblock->nNonce = ByteReverse(nNonceFound);
+    		    printf("%s hash %s\n", __func__, hash.ToString().c_str());
+    		    printf("%s pblock hash %s\n", __func__, pblock->GetHash().ToString().c_str());
                     assert(hash == pblock->GetHash());
                     if (!pblock->SignBlock(*pwalletMain))
                     {
