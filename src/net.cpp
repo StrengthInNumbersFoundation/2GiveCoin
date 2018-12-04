@@ -1231,6 +1231,7 @@ void ThreadDNSAddressSeed()
         } else {
             vector<CNetAddr> vaddr;
             vector<CAddress> vAdd;
+	    printf("LookupHost %s\n", strDNSSeed[seed_idx][1]);
             if (LookupHost(strDNSSeed[seed_idx][1], vaddr))
             {
                 BOOST_FOREACH(CNetAddr& ip, vaddr)
