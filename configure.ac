@@ -9,7 +9,7 @@ define(_COPYRIGHT_YEAR, 2017)
 AC_INIT([Peercoin],[_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_REVISION],[info@peercoin.net],[peercoin])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([build-aux/m4])
-LT_INIT([disable-shared])
+# LT_INIT([disable-shared])
 AC_CANONICAL_HOST
 AH_TOP([#ifndef BITCOIN_CONFIG_H])
 AH_TOP([#define BITCOIN_CONFIG_H])
@@ -168,7 +168,7 @@ AC_ARG_ENABLE([wallet],
 ## TODO: Remove these hard-coded paths and flags. They are here for the sake of
 ##       compatibility with the legacy buildsystem.
 ##
-CXXFLAGS="$CXXFLAGS -Wall -Wextra -Wformat -Wformat-security -Wno-unused-parameter -Wno-unused-local-typedef -Wno-deprecated-declarations -Wno-ignored-attributes -Wno-sign-compare"
+CXXFLAGS="$CXXFLAGS -Wall -Wextra -Wformat -Wformat-security -Wno-unused-parameter -Wno-deprecated-declarations -Wno-ignored-attributes -Wno-sign-compare"
 CPPFLAGS="$CPPFLAGS -DBOOST_SPIRIT_THREADSAFE -DHAVE_BUILD_INFO"
 DEBUG_CXXFLAGS="-g -ggdb"
 RELEASE_CXXFLAGS="-O2"
