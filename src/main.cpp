@@ -5486,6 +5486,7 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
 		    UBEGIN(hash),
 		    &res_header );
 
+	    printf("hash found %s nNonceFound %d\n", hash.ToString().c_str(), nNonceFound);
 
             // Check if something found
             if (nNonceFound != (unsigned int) -1)
