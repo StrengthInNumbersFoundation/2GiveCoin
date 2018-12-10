@@ -5490,13 +5490,16 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
             // Check if something found
             if (nNonceFound != (unsigned int) -1)
             {
+#if 0
                 for (unsigned int i = 0; i < sizeof(hash)/4; i++)
                     ((unsigned int*)&hash)[i] = ByteReverse(((unsigned int*)&hash)[i]);
+#endif
 
                 if (hash <= hashTarget)
                 {
                     // Found a solution
-                    pblock->nNonce = ByteReverse(nNonceFound);
+                    //pblock->nNonce = ByteReverse(nNonceFound);
+                    pblock->nNonce = nNonceFound;
     		    printf("%s hash %s\n", __func__, hash.ToString().c_str());
     		    printf("%s pblock hash %s\n", __func__, pblock->GetHash().ToString().c_str());
                     assert(hash == pblock->GetHash());

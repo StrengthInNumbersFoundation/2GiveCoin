@@ -1467,6 +1467,8 @@ public:
     }
 #endif
 
+
+    /* Changed to support scrypt for the main block hash */
     uint256 GetHash() const
     {
         uint256 thash;
