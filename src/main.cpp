@@ -3869,16 +3869,17 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return false;
         }
 
+	int _debug = 1;
         int64 nTime;
         CAddress addrMe;
         CAddress addrFrom;
         uint64 nNonce = 1;
         vRecv >> pfrom->nVersion >> pfrom->nServices >> nTime;
 
-	//printf("%s:%d pos %u version %u services %llu\n", __func__, __LINE__, vRecv.getReadPos(), pfrom->nVersion, pfrom->nServices);
+	if (_debug) printf("%s:%d pos %u version %u services %llu\n", __func__, __LINE__, vRecv.getReadPos(), pfrom->nVersion, pfrom->nServices);
 
 	vRecv >> addrMe;
-	//printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
+	if (_debug) printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
 	
         if (pfrom->nVersion < MIN_PROTO_VERSION)
         {
@@ -3889,42 +3890,44 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return false;
         }
 
-	//printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
+	if (_debug) printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
         if (pfrom->nVersion == 10300)
             pfrom->nVersion = 300;
 	
         if (!vRecv.empty())
 		vRecv >> addrFrom;
-	//printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
+	if (_debug) printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
 	
         if (!vRecv.empty())
 		vRecv >> nNonce;
-	//printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
+	if (_debug) printf("%s:%d pos %u nNonce %u\n", __func__, __LINE__, vRecv.getReadPos(), nNonce);
 	
         if (!vRecv.empty()) {
             vRecv >> pfrom->strSubVer;
             pfrom->cleanSubVer = SanitizeString(pfrom->strSubVer);
         }
-	//printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
+	if (_debug) printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
 	
         if (!vRecv.empty())
             vRecv >> pfrom->nStartingHeight;
-	//printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
+	
+	if (_debug) printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
 	
         if (!vRecv.empty()) {
             vRecv >> pfrom->fRelayTxes; // set to true after we get the first filter* message
-	    //printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
+	    if (_debug) printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
+	
 	} else
             pfrom->fRelayTxes = true;
 	
-	//printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
+	if (_debug) printf("%s:%d pos %u\n", __func__, __LINE__, vRecv.getReadPos());
 
         if (pfrom->fInbound && addrMe.IsRoutable())
         {
             pfrom->addrLocal = addrMe;
             SeenLocal(addrMe);
         }
-	//printf("%s:%d\n", __func__, __LINE__);
+	if (_debug) printf("%s:%d\n", __func__, __LINE__);
 
         // Disconnect if we connected to ourself
         if (nNonce == nLocalHostNonce && nNonce > 1)
@@ -4549,7 +4552,9 @@ bool ProcessMessages(CNode* pfrom)
 
         // Scan for message start
         if (memcmp(msg.hdr.pchMessageStart, pchMessageStart, sizeof(pchMessageStart)) != 0) {
-            printf("\n\nPROCESSMESSAGE: INVALID MESSAGESTART aka MAGIC\n\n");
+		printf("\nPROCESSMESSAGE: INVALID MESSAGESTART aka MAGIC: %s vs %s\n",
+		       msg.hdr.pchMessageStart,
+		       pchMessageStart);
             fOk = false;
             break;
         }
@@ -4558,7 +4563,7 @@ bool ProcessMessages(CNode* pfrom)
         CMessageHeader& hdr = msg.hdr;
         if (!hdr.IsValid())
         {
-            printf("\n\nPROCESSMESSAGE: ERRORS IN HEADER %s\n\n\n", hdr.GetCommand().c_str());
+            printf("\nPROCESSMESSAGE: ERRORS IN HEADER %s\n\n\n", hdr.GetCommand().c_str());
             continue;
         }
         string strCommand = hdr.GetCommand();

@@ -1007,9 +1007,10 @@ void ThreadSocketHandler()
                         else if (nBytes == 0)
                         {
                             // socket closed gracefully
-                            if (!pnode->fDisconnect)
-                                printf("socket closed\n");
-                            pnode->CloseSocketDisconnect();
+			     if (!pnode->fDisconnect) {
+				  printf("socket closed nBytes %u Dis %u\n", nBytes, pnode->fDisconnect);
+			     }
+			     pnode->CloseSocketDisconnect();
                         }
                         else if (nBytes < 0)
                         {
